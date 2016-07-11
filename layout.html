@@ -16,6 +16,12 @@
 		height: 100%;
 		width: 100%;
 	}
+	/* Column header class */
+	.header {
+		width: 100%;
+		text-align: center;
+		background-color: magenta;
+	}
 	/* Trigger and action channel banks class */
 	.bank {
 		height: 100%;
@@ -23,27 +29,66 @@
 		background-color: chartreuse;
 	}
 	/* Trigger channel bank */
-	#triggers {
+	#trigger-bank {
 		float: left;
 	}
 	/* Action channel bank */
-	#actions {
+	#action-bank {
 		float: right;
 	}
 	/* Code area block */
-	#code_area {
+	#code-area {
 		height: 100%;
 		margin: auto;
 		background-color: indigo;
+	}
+	/* Code block */
+	.code-block {
+		height: 100px;
+		width: 200px;
+		text-align: center;
+		background-color: pink;
+		margin: 10px auto; /* centers horizontally */
+	}
+	/* Channel block */
+	.channel-block {
+		height: 100px;
+		width: 100px;
+		text-align: center;
+		background-color: azure;
+		margin: 10px auto; /* centers horizontally */
+	}
+	/* Button to add new blocks */
+	.button-add {
+		height: 50px;
+		width: 50px;
+		display: block;
+		margin: 10px auto;
 	}
 
 	</style>
 </head>
 
 <body>
-	<div class="bank" id="triggers">Triggers Here</div>
-	<div class="bank" id="actions">Actions Here</div>
-	<div id="code_area">Code Here</div>
+	<div class="bank" id="trigger-bank">
+		<div class="header">Triggers:</div>
+		<div class="channel-block">Touch Sensor 1</div>
+		<div class="channel-block">Brick Button Up</div>
+		<button class="button-add" onclick="console.log('New Trigger Channel')">+</button>
+	</div>
+	<div class="bank" id="action-bank">
+		<div class="header">Actions:</div>
+		<div class="channel-block">Large Motor A</div>
+		<div class="channel-block">Large Motor B</div>
+		<div class="channel-block">Play Elephant Sound</div>
+		<button class="button-add" onclick="console.log('New Action Channel')">+</button>
+	</div>
+	<div id="code-area">
+		<div class="header">Code:</div>
+		<div class="code-block">CODE CODE CODE</div>
+		<div class="code-block">CODE CODE CODE</div>
+		<button class="button-add" onclick="console.log('New Code Block')">+</button>
+	</div>
 </body>
 
 </html>
