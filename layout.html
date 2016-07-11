@@ -1,0 +1,49 @@
+<!-- 
+	Created by Caleb Lucas-Foley
+	2016-07-11
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Layout concept</title>
+	<style>
+	* {
+		margin: 0px;
+	}
+	html, body {
+		height: 100%;
+		width: 100%;
+	}
+	/* Trigger and action channel banks class */
+	.bank {
+		height: 100%;
+		width: 200px;
+		background-color: chartreuse;
+	}
+	/* Trigger channel bank */
+	#triggers {
+		float: left;
+	}
+	/* Action channel bank */
+	#actions {
+		float: right;
+	}
+	/* Code area block */
+	#code_area {
+		height: 100%;
+		margin: auto;
+		background-color: indigo;
+	}
+
+	</style>
+</head>
+
+<body>
+	<div class="bank" id="triggers">Triggers Here</div>
+	<div class="bank" id="actions">Actions Here</div>
+	<div id="code_area">Code Here</div>
+</body>
+
+</html>
