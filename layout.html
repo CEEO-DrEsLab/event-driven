@@ -40,13 +40,16 @@
 		height: 100%;
 		background-color: chartreuse;
 		overflow: auto;
+		border: inset;
 	}
 	/* Class for code areas */
 	.code-area {
 		height: 100%;
 		background-color: indigo;
 		overflow: auto;
+		border: inset;
 	}
+
 	/* Channel block */
 	.channel-block {
 		height: 100px;
@@ -63,21 +66,21 @@
 		display: block;
 		margin: 10px auto;
 	}
-	/* Trigger Code Block */
-	.trigger-block {
+	/* Code block parent */
+	.code-block {
 		height: 100px;
 		width: 200px;
+		border-style: outset;
+	}
+	/* Trigger-specific blocks */
+	.trigger-block {
 		float: right;
 		margin-right: 50%;
 		background-color: forestgreen;
-		border-style: outset;
 	}
-	/* Action Code Block */
+	/* Action-specific blocks (also used for button positioning) */
 	div.action-block {
-		height: 100px;
-		width: 200px;
 		background-color: crimson;
-		border-style: outset;
 	}
 	.action-block {
 		display: block;
@@ -105,10 +108,10 @@
 		"A": "motor",
 		"B": "motor",
 		"C": "motor",
-		"D": "motor",
-		"BRICK BUTTON": "brick in",
-		"BRICK LIGHT": "brick out",
-		"BRICK SOUND": "brick out",
+		"D": "motor"//,
+		// "BRICK BUTTON": "brick in",
+		// "BRICK LIGHT": "brick out",
+		// "BRICK SOUND": "brick out",
 	};
 	var SENSORS = ["Touch Sensor", "Ultrasonic Sensor", "Color Sensor"];
 	var MOTORS = ["Large Motor", "Medium Motor"];
@@ -118,15 +121,50 @@
 	///////////////////////////// Code Model /////////////////////////////
 	//////////////////////////////////////////////////////////////////////
 
-	var portConfig = {};
+	var portConfig = {}; // {<port#>:<peripheral>}
 
-	// var triggerChannels = [];
+	var triggerChannels = [];
 
-	// var actionChannels = [];
+	var actionChannels = [];
 
-	var channels = [];
+	var channels = ["tempchannel1", "tempchannel2"];
 
 	var code = {}; //{<channel>:{<trigger>:[<action>,],},};
+
+
+	//////////////////////////////////////////////////////////////////////
+	/////////////////////// Port Data Propogation ////////////////////////
+	//////////////////////////////////////////////////////////////////////
+
+	// The selected options in the select nodes in this list must not appear in the other lists as options
+	var exclusivePortLists = [];
+	var availablePorts = Object.keys(PORT_TYPES);
+	var claimedPorts = [];
+
+	function addNewOption(parent, content) {
+		var newOption = document.createElement("option");
+		newOption.text = content;
+		parent.add(newOption);
+	}
+
+	function updatePortLists() {
+		console.log("updating ports")
+		console.log(availablePorts);
+		console.log(claimedPorts);
+		for (i in exclusivePortLists) {
+			// Remove all non-selected options
+			var temp = exclusivePortLists[i].value;
+			exclusivePortLists[i].length = 0;
+			addNewOption(exclusivePortLists[i], temp);
+
+			// Re-add all available ports to each list
+			for (k in availablePorts) {
+				console.log("adding port " + availablePorts[k] + " to list " + i);
+				addNewOption(exclusivePortLists[i], availablePorts[k]);
+			}
+		}
+		console.log("update done");
+	}
 
 
 	//////////////////////////////////////////////////////////////////////
@@ -138,20 +176,16 @@
 		var peripheral = prompt("Enter Peripheral Name:");
 		var port = prompt("Which port is the " + peripheral + " in?");
 		portConfig[port] = peripheral;
-		channels.push(port + " (" + peripheral +")");
 		return [peripheral, port];
 	}
 
 	function makeTriggerBlock () {
 		var newTrigger = document.createElement("div");
-		newTrigger.className = "trigger-block";
+		newTrigger.className = "code-block trigger-block";
 		newTrigger.innerHTML = "Port:";
 		var channelSelect = document.createElement("select");
 		for (i in channels) {
-			var newOption = document.createElement("option");
-			newOption.value = channels[i];
-			newOption.innerHTML = channels[i];
-			channelSelect.appendChild(newOption);
+			addNewOption(channelSelect, channels[i]);
 		}
 		newTrigger.appendChild(channelSelect);
 		return newTrigger;
@@ -159,17 +193,74 @@
 
 	function makeActionBlock () {
 		var newAction = document.createElement("div");
-		newAction.className = "action-block";
+		newAction.className = "code-block action-block";
 		newAction.innerHTML = "Port:";
 		var channelSelect = document.createElement("select");
 		for (i in channels) {
-			var newOption = document.createElement("option");
-			newOption.value = channels[i];
-			newOption.innerHTML = channels[i];
-			channelSelect.appendChild(newOption);
+			addNewOption(channelSelect, channels[i]);
 		}
 		newAction.appendChild(channelSelect);
 		return newAction;
+	}
+
+	// function makeChannelBlock(type) {
+	// 	var channelData = makeChannel();
+	// 	if (channelData[0] != null && channelData[1] != null) {
+	// 		var newChannelBlock = document.createElement("div");
+	// 		newChannelBlock.className = "channel-block";
+	// 		newChannelBlock.innerHTML = channelData[0] + "<br/>(port: " + channelData[1] + ")";
+	// 		return newChannelBlock;
+	// 	} else {
+	// 		return null;
+	// 	}
+	// }
+
+	// Make a new channel block (to be added to a sidebar) with an exclusive port selector
+	// TODO: modularize
+	function makeEditableChannelBlock (type) {
+		var newChannelBlock = document.createElement("div");
+		newChannelBlock.className = "channel-block";
+		var portSelect = document.createElement("select");
+		for (i in availablePorts) {
+			var newOption = document.createElement("option");
+			newOption.text = availablePorts[i];
+			portSelect.add(newOption);
+		}
+		exclusivePortLists.push(portSelect);
+		portSelect.oldValue = portSelect.value;
+		console.log(availablePorts.splice(availablePorts.indexOf(portSelect.value), 1));
+		claimedPorts.push(portSelect.value);
+
+		updatePortLists();
+
+		portSelect.onchange = function () {	
+			console.log("change detected");
+			console.log(this.oldValue);
+			console.log(this.value);
+
+			availablePorts.push(this.oldValue);
+			claimedPorts.splice(claimedPorts.indexOf(this.oldValue), 1);
+
+			availablePorts.splice(availablePorts.indexOf(this.value), 1);
+			claimedPorts.push(this.value);
+
+			updatePortLists();
+		};
+
+		var peripheralSelect = document.createElement("select");
+		for (i in (type == "trigger" ? SENSORS : MOTORS)) {
+			var newOption = document.createElement("option");
+			newOption.text = (type == "trigger" ? SENSORS : MOTORS)[i];
+			peripheralSelect.add(newOption);
+		}
+		peripheralSelect.onchange = function () {
+			portConfig[currentPortSelected] = peripheralSelect.value;
+		}
+
+		newChannelBlock.appendChild(portSelect);
+		newChannelBlock.appendChild(peripheralSelect);
+
+		return newChannelBlock;
 	}
 
 
@@ -177,18 +268,18 @@
 	/////////////////////// Adding New Code Blocks ///////////////////////
 	//////////////////////////////////////////////////////////////////////
 
-	// Adds a new channel block above the specified element
-	function addChannelBlockAbove(button) {
-		channelData = makeChannel();
-		if (channelData[0] != null && channelData[1] != null) {
-			var newNode = document.createElement("div");
-			newNode.className = "channel-block";
-			newNode.innerHTML = channelData[0] + "<br/>(port: " + channelData[1] + ")";
-			button.parentNode.insertBefore(newNode, button);
-		} else {
-			alert("Error creating channel (please specify port  and peripheral)")
+	// Adds a new channel block (of the specified type) above the specified element
+	function addChannelBlockAbove(button, type) {
+		if (type != "trigger" && type != "action") {
+			alert("Error creating channel (invalid channel type)");
+			return;
 		}
-
+		var newChannelBlock = makeEditableChannelBlock(type);
+		if (newChannelBlock != null) {
+			button.parentNode.insertBefore(newChannelBlock, button);
+		} else {
+			alert("Error creating channel (please specify port and peripheral)");
+		}
 	}
 
 	// Adds a new action block above the specified element
@@ -215,14 +306,14 @@
 </head>
 
 <body>
-	<div class="left-column column-header">Triggers:</div>
-	<div class="right-column column-header">Actions:</div>
+	<div class="left-column column-header">Trigger Channels:</div>
+	<div class="right-column column-header">Action Channels:</div>
 	<div class="center-column column-header">Code:</div>
 	<div class="left-column sidebar">
-		<button class="button-add" onclick="addChannelBlockAbove(this)">+</button>
+		<button class="button-add" onclick="addChannelBlockAbove(this, 'trigger')">+</button>
 	</div>
 	<div class="right-column sidebar">
-		<button class="button-add" onclick="addChannelBlockAbove(this)">+</button>
+		<button class="button-add" onclick="addChannelBlockAbove(this, 'action')">+</button>
 	</div>
 	<div class="center-column code-area">
 		<button class="button-add" onclick="addPairAbove(this)">+</button>
