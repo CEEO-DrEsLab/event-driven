@@ -54,6 +54,7 @@
 		text-align: center;
 		background-color: azure;
 		margin: 10px auto; /* centers horizontally */
+		border-style: outset;
 	}
 	/* Button to add new blocks */
 	.button-add {
@@ -66,19 +67,19 @@
 	.trigger-block {
 		height: 100px;
 		width: 200px;
-		text-align: center;
 		float: right;
 		margin-right: 50%;
 		background-color: forestgreen;
+		border-style: outset;
 	}
 	/* Action Code Block */
 	div.action-block {
 		height: 100px;
 		width: 200px;
 		background-color: crimson;
+		border-style: outset;
 	}
 	.action-block {
-		text-align: center;
 		display: block;
 		position: relative;
 		left: 50%;
@@ -88,39 +89,124 @@
 		background-color: cyan;
 		margin: 10px; /* centers horizontally */
 		min-height: 100px;
-		text-align: center;
 	}
 	</style>
 	<script async>
-	// Adds a new channel block above the specified element
-	function addChannelBlockAbove(button) {
-		var newNode = document.createElement("div");
-		newNode.className = "channel-block";
-		newNode.innerHTML = "NEW CHANNEL";
-		button.parentNode.insertBefore(newNode, button);
+	//////////////////////////////////////////////////////////////////////
+	///////////////////////////// Constants //////////////////////////////
+	//////////////////////////////////////////////////////////////////////
+
+	// EV3 Constants
+	var PORT_TYPES = {
+		"1": "sensor",
+		"2": "sensor",
+		"3": "sensor",
+		"4": "sensor",
+		"A": "motor",
+		"B": "motor",
+		"C": "motor",
+		"D": "motor",
+		"BRICK BUTTON": "brick in",
+		"BRICK LIGHT": "brick out",
+		"BRICK SOUND": "brick out",
+	};
+	var SENSORS = ["Touch Sensor", "Ultrasonic Sensor", "Color Sensor"];
+	var MOTORS = ["Large Motor", "Medium Motor"];
+
+
+	//////////////////////////////////////////////////////////////////////
+	///////////////////////////// Code Model /////////////////////////////
+	//////////////////////////////////////////////////////////////////////
+
+	var portConfig = {};
+
+	// var triggerChannels = [];
+
+	// var actionChannels = [];
+
+	var channels = [];
+
+	var code = {}; //{<channel>:{<trigger>:[<action>,],},};
+
+
+	//////////////////////////////////////////////////////////////////////
+	////////////////////////// New Block Setup ///////////////////////////
+	//////////////////////////////////////////////////////////////////////
+
+	// Makes a custom channel (GUI only)
+	function makeChannel() {
+		var peripheral = prompt("Enter Peripheral Name:");
+		var port = prompt("Which port is the " + peripheral + " in?");
+		portConfig[port] = peripheral;
+		channels.push(port + " (" + peripheral +")");
+		return [peripheral, port];
 	}
-	// Adds a new action block above the specified element
-	function addActionAbove(button) {
+
+	function makeTriggerBlock () {
+		var newTrigger = document.createElement("div");
+		newTrigger.className = "trigger-block";
+		newTrigger.innerHTML = "Port:";
+		var channelSelect = document.createElement("select");
+		for (i in channels) {
+			var newOption = document.createElement("option");
+			newOption.value = channels[i];
+			newOption.innerHTML = channels[i];
+			channelSelect.appendChild(newOption);
+		}
+		newTrigger.appendChild(channelSelect);
+		return newTrigger;
+	}
+
+	function makeActionBlock () {
 		var newAction = document.createElement("div");
 		newAction.className = "action-block";
-		newAction.innerHTML = "New Action CODE CODE CODE";
-		button.parentNode.insertBefore(newAction, button);
+		newAction.innerHTML = "Port:";
+		var channelSelect = document.createElement("select");
+		for (i in channels) {
+			var newOption = document.createElement("option");
+			newOption.value = channels[i];
+			newOption.innerHTML = channels[i];
+			channelSelect.appendChild(newOption);
+		}
+		newAction.appendChild(channelSelect);
+		return newAction;
 	}
+
+
+	//////////////////////////////////////////////////////////////////////
+	/////////////////////// Adding New Code Blocks ///////////////////////
+	//////////////////////////////////////////////////////////////////////
+
+	// Adds a new channel block above the specified element
+	function addChannelBlockAbove(button) {
+		channelData = makeChannel();
+		if (channelData[0] != null && channelData[1] != null) {
+			var newNode = document.createElement("div");
+			newNode.className = "channel-block";
+			newNode.innerHTML = channelData[0] + "<br/>(port: " + channelData[1] + ")";
+			button.parentNode.insertBefore(newNode, button);
+		} else {
+			alert("Error creating channel (please specify port  and peripheral)")
+		}
+
+	}
+
+	// Adds a new action block above the specified element
+	function addActionAbove(button) {
+		button.parentNode.insertBefore(makeActionBlock(), button);
+	}
+
 	// Adds a new trigger (with add-action button) above the specified element
 	function addPairAbove(button) {
 		var newPair = document.createElement("div");
 		newPair.className = "pair-container";
-
-		var newTrigger = document.createElement("div");
-		newTrigger.className = "trigger-block";
-		newTrigger.innerHTML = "New Trigger CODE CODE CODE";
 
 		var newButton = document.createElement("button");
 		newButton.className = "action-block";
 		newButton.innerHTML = "+";
 		newButton.setAttribute("onclick", "addActionAbove(this)");
 
-		newPair.appendChild(newTrigger);
+		newPair.appendChild(makeTriggerBlock());
 		newPair.appendChild(newButton);
 
 		button.parentNode.insertBefore(newPair, button);
@@ -133,14 +219,9 @@
 	<div class="right-column column-header">Actions:</div>
 	<div class="center-column column-header">Code:</div>
 	<div class="left-column sidebar">
-		<div class="channel-block">Touch Sensor 1</div>
-		<div class="channel-block">Brick Button Up</div>
 		<button class="button-add" onclick="addChannelBlockAbove(this)">+</button>
 	</div>
 	<div class="right-column sidebar">
-		<div class="channel-block">Large Motor A</div>
-		<div class="channel-block">Large Motor B</div>
-		<div class="channel-block">Play Sound</div>
 		<button class="button-add" onclick="addChannelBlockAbove(this)">+</button>
 	</div>
 	<div class="center-column code-area">
