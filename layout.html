@@ -16,39 +16,36 @@
 		height: 100%;
 		width: 100%;
 	}
-	/* Column header class */
-	.header {
-		width: 100%;
+	/* Column column-header class */
+	.column-header {
 		text-align: center;
 		background-color: magenta;
 	}
-	/* Trigger and action channel banks class */
-	.bank {
-		height: 100%;
-		width: 200px;
-		background-color: chartreuse;
-	}
-	/* Trigger channel bank */
-	#trigger-bank {
+	/* Left column (trigger channel sidebar) */
+	.left-column {
+		width: 250px;
 		float: left;
 	}
-	/* Action channel bank */
-	#action-bank {
+	/* Right column (action channel sidebar) */
+	.right-column {
+		width: 250px;
 		float: right;
 	}
-	/* Code area block */
-	#code-area {
-		height: 100%;
+	/* Center column (code area) */
+	.center-column {
 		margin: auto;
-		background-color: indigo;
 	}
-	/* Code block */
-	.code-block {
-		height: 100px;
-		width: 200px;
-		text-align: center;
-		background-color: pink;
-		margin: 10px auto; /* centers horizontally */
+	/* Class for left and right sidebars */
+	.sidebar {
+		height: 100%;
+		background-color: chartreuse;
+		overflow: auto;
+	}
+	/* Class for code areas */
+	.code-area {
+		height: 100%;
+		background-color: indigo;
+		overflow: auto;
 	}
 	/* Channel block */
 	.channel-block {
@@ -65,29 +62,89 @@
 		display: block;
 		margin: 10px auto;
 	}
-
+	/* Trigger Code Block */
+	.trigger-block {
+		height: 100px;
+		width: 200px;
+		text-align: center;
+		float: right;
+		margin-right: 50%;
+		background-color: forestgreen;
+	}
+	/* Action Code Block */
+	div.action-block {
+		height: 100px;
+		width: 200px;
+		background-color: crimson;
+	}
+	.action-block {
+		text-align: center;
+		display: block;
+		position: relative;
+		left: 50%;
+	}
+	/* Trigger-action pair container */
+	.pair-container {
+		background-color: cyan;
+		margin: 10px; /* centers horizontally */
+		min-height: 100px;
+		text-align: center;
+	}
 	</style>
+	<script async>
+	// Adds a new channel block above the specified element
+	function addChannelBlockAbove(button) {
+		var newNode = document.createElement("div");
+		newNode.className = "channel-block";
+		newNode.innerHTML = "NEW CHANNEL";
+		button.parentNode.insertBefore(newNode, button);
+	}
+	// Adds a new action block above the specified element
+	function addActionAbove(button) {
+		var newAction = document.createElement("div");
+		newAction.className = "action-block";
+		newAction.innerHTML = "New Action CODE CODE CODE";
+		button.parentNode.insertBefore(newAction, button);
+	}
+	// Adds a new trigger (with add-action button) above the specified element
+	function addPairAbove(button) {
+		var newPair = document.createElement("div");
+		newPair.className = "pair-container";
+
+		var newTrigger = document.createElement("div");
+		newTrigger.className = "trigger-block";
+		newTrigger.innerHTML = "New Trigger CODE CODE CODE";
+
+		var newButton = document.createElement("button");
+		newButton.className = "action-block";
+		newButton.innerHTML = "+";
+		newButton.setAttribute("onclick", "addActionAbove(this)");
+
+		newPair.appendChild(newTrigger);
+		newPair.appendChild(newButton);
+
+		button.parentNode.insertBefore(newPair, button);
+	}
+	</script>
 </head>
 
 <body>
-	<div class="bank" id="trigger-bank">
-		<div class="header">Triggers:</div>
+	<div class="left-column column-header">Triggers:</div>
+	<div class="right-column column-header">Actions:</div>
+	<div class="center-column column-header">Code:</div>
+	<div class="left-column sidebar">
 		<div class="channel-block">Touch Sensor 1</div>
 		<div class="channel-block">Brick Button Up</div>
-		<button class="button-add" onclick="console.log('New Trigger Channel')">+</button>
+		<button class="button-add" onclick="addChannelBlockAbove(this)">+</button>
 	</div>
-	<div class="bank" id="action-bank">
-		<div class="header">Actions:</div>
+	<div class="right-column sidebar">
 		<div class="channel-block">Large Motor A</div>
 		<div class="channel-block">Large Motor B</div>
-		<div class="channel-block">Play Elephant Sound</div>
-		<button class="button-add" onclick="console.log('New Action Channel')">+</button>
+		<div class="channel-block">Play Sound</div>
+		<button class="button-add" onclick="addChannelBlockAbove(this)">+</button>
 	</div>
-	<div id="code-area">
-		<div class="header">Code:</div>
-		<div class="code-block">CODE CODE CODE</div>
-		<div class="code-block">CODE CODE CODE</div>
-		<button class="button-add" onclick="console.log('New Code Block')">+</button>
+	<div class="center-column code-area">
+		<button class="button-add" onclick="addPairAbove(this)">+</button>
 	</div>
 </body>
 
