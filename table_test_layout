@@ -1,7 +1,7 @@
 <!--
 	Table Test Layout
 	By: Benjamin Zackin
-	Last Modified: 7/12/2016
+	Last Modified: 7/13/2016
 -->
 
 <!DOCTYPE html>
@@ -31,23 +31,59 @@
 		/*Set up Link Pair table styles*/
 		.linkPair, .linkPair th, .linkPair td {
 			border:1px solid black;
-			width:400px;
-			height:50px;
 			margin:10px;
 		}
 		.linkPair {
 			border-collapse:collapse;
 		}
 		.linkPair th {
-			border-bottom:0px none;
+			top:0px;
+			bottom:0px;
+			min-width:200px;
+			min-height:90px;
+			margin:0px;
 			background-color:green;
 		}
 		.linkPair td {
-			border-top:0px none;
-			font-weight:bold;
+			top:0px;
+			bottom:0px;
+			min-width:200px;
+			min-height:90px;
+			margin:0px;
 			background-color:blue;
+			font-weight:bold;
 		}
-		
+		.triggerSocket {
+			min-width:200px;
+			min-height:90px;
+			margin:0px;
+			background-color:green;
+			border:1px dashed white;
+		}
+		.actionSocket {
+			min-width:200px;
+			min-height:90px;
+			margin:0px;
+			background-color:blue;
+			border:1px dashed white;
+			font-weight:bold;
+		}
+		.triggerBlock {
+			top:0px;
+			bottom:0px;
+			min-width:200px;
+			min-height:50px;
+			margin:10px;
+			background-color:lightgreen;
+		}
+		.actionBlock {
+			top:0px;
+			bottom:0px;
+			min-width:200px;
+			min-height:50px;
+			margin:10px;
+			background-color:lightblue;
+		}
 		.newTrigger {
 			margin:10px;
 			float:left;
@@ -57,6 +93,7 @@
 		}
 		.codeScreen {
 			width:100%;
+			background-color: grey;
 		}
 	</style>
 </head>
@@ -128,7 +165,8 @@
 			var tr = document.createElement("tr");
 
 			var th0 = document.createElement("th");
-			th0.innerHTML = "This is a Trigger Block!";
+			//th0.innerHTML = "This is a Trigger Block!";
+			th0 = makeSocket(th0, triggerCounter, true);
 			tr.appendChild(th0);
 
 			var td1 = document.createElement("td");
@@ -146,28 +184,21 @@
 			console.log("action button pressed in table number " + idNum +"!");
 			var thisTable = document.getElementsByClassName("linkPair")[idNum];
 			console.log(thisTable);
-			thisTable.className = "linkPair";
+
 			var numRows = thisTable.rows.length;
 			console.log("This table has " + numRows + " rows");
-			var oldBtn = document.getElementsByClassName("newAction");
-			oldBtn[triggerCounter-1].remove();
-			console.log("Old button contains: ")
-			console.log(oldBtn);
+			thisTable.rows[numRows-1].lastChild.innerHTML= "";
+			thisTable.rows[numRows-1].lastChild = makeSocket(thisTable.rows[numRows-1].lastChild, numRows-1, false);
+			
+			
 			var row = thisTable.insertRow(numRows);
 			var cell0 = document.createElement("th");
-			thisTable.appendChild(cell0);
+			row.appendChild(cell0);
 
 			var cell1 = document.createElement("td");
 			var newButton = makeButton(idNum, false);
 			cell1.appendChild(newButton);
-			thisTable.appendChild(cell1);
-
-			console.log("we have " + numRows + " buggy rows being manipulated");
-			console.log("table row length is: " + thisTable.rows.length);
-			var cellData = thisTable.rows[numRows-1].cells;
-			console.log(cellData[1]);
-			cellData[1].innerHTML = "This is an Action Block!";
-			console.log("new action created!");
+			row.appendChild(cell1);
 			return;
 		}
 
@@ -178,15 +209,85 @@
 			button.innerHTML = "Click to add an Action";
 			button.className = "newAction";
 			if (isTrig) {
-				button.setAttribute("id", triggerCounter++)
+				button.setAttribute("id", triggerCounter++);
 			}
 			else {
-				button.setAttribute("id", idNum)
+				button.setAttribute("id", idNum);
 			}
 			button.setAttribute("onclick","newRow(this.id)");
 			return button;
-
 		}
+		function makeSocket(mountLoc,idNum,isTrig) {
+			var socket = document.createElement("div");
+			if (isTrig) {
+				socket.className = "triggerSocket";
+				var idTxt = "tSock" + idNum;
+				socket.setAttribute("id", idTxt);
+				socket.setAttribute("ondrop","drop(event)");
+				socket.setAttribute("ondragover","allowDrop(event)");
+				socket.innerHTML = idTxt;
+				socket = makeDragBlock(socket,idNum, true);
+			}
+			else {
+				socket.className = "actionSocket";
+				var idTxt = "aSock" + idNum;
+				socket.setAttribute("id", idTxt);
+				socket.setAttribute("ondrop","drop(event)");
+				socket.setAttribute("ondragover","allowDrop(event)");
+				socket.innerHTML = idTxt;
+				socket = makeDragBlock(socket,idNum, false);
+			}
+			mountLoc.appendChild(socket);
+			return mountLoc;
+		}
+
+
+		function makeDragBlock(startSocket,idNum,isTrig) {
+			var dragBlock = document.createElement("div");
+			if (isTrig) {
+				dragBlock.className = "triggerBlock";
+				var idTxt = "tDrag" + idNum;
+				dragBlock.setAttribute("id", idTxt);
+				dragBlock.setAttribute("draggable","true");
+				dragBlock.setAttribute("ondragstart","drag(event)");
+
+				dragBlock.removeAttribute("ondrop", "dummy()");// disable inherited socket properties
+				dragBlock.setAttribute("ondragover", "dummy()");// disable inherited socket properties
+
+				dragBlock.innerHTML = idTxt;
+				startSocket.appendChild(dragBlock);
+				return startSocket;
+			}
+			else {
+				dragBlock.className = "actionBlock";
+				var idTxt = "aDrag" + idNum;
+				dragBlock.setAttribute("id", idTxt);
+				dragBlock.setAttribute("draggable","true");
+				dragBlock.setAttribute("ondragstart","drag(event)");
+				console.log(dragBlock);
+
+				dragBlock.setAttribute("ondrop", "dummy(event)");// disable inherited socket properties
+				dragBlock.setAttribute("ondragover", "dummy(event)");// disable inherited socket properties
+
+				console.log(dragBlock);
+				dragBlock.innerHTML = idTxt;
+				startSocket.appendChild(dragBlock);
+				return startSocket;
+			}
+		}
+
+		function allowDrop(ev) {
+			ev.preventDefault();
+		}
+		function drag(ev) {
+			ev.dataTransfer.setData("text", ev.target.id);
+		}
+		function drop(ev) {
+			ev.preventDefault();
+   			var data = ev.dataTransfer.getData("text");
+    		ev.target.appendChild(document.getElementById(data));
+		}
+		function dummy(ev) {}
 	</script>
 </body>
 </html>
