@@ -1,0 +1,192 @@
+<!--
+	Table Test Layout
+	By: Benjamin Zackin
+	Last Modified: 7/12/2016
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Table Test Layout</title>
+	<style> 
+		* {
+			margin:0px;
+		}
+		/*Set up Port View table styles*/
+		#portView, #portView th, #portView td {
+			border:1px solid black;
+		}
+		#portView {
+			border-collapse:collapse;
+		}
+		#portView th {
+			border-bottom:0px none;
+		}
+		#portView td {
+			border-top:0px none;
+			border-bottom:1px solid black;
+		}
+
+		/*Set up Link Pair table styles*/
+		.linkPair, .linkPair th, .linkPair td {
+			border:1px solid black;
+			width:400px;
+			height:50px;
+			margin:10px;
+		}
+		.linkPair {
+			border-collapse:collapse;
+		}
+		.linkPair th {
+			border-bottom:0px none;
+			background-color:green;
+		}
+		.linkPair td {
+			border-top:0px none;
+			font-weight:bold;
+			background-color:blue;
+		}
+		
+		.newTrigger {
+			margin:10px;
+			float:left;
+		}
+		.newAction {
+			margin:10px;
+		}
+		.codeScreen {
+			width:100%;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="header">
+		<h1>Interface Trial 2: Tables</h1>
+	</div>
+
+	<div id="nav">
+		<button>New</button>
+		<button>Open</button>
+		<button>Save</button>
+		<button>Print</button>
+		<button>Deploy</button>
+		<button>Run</button>
+		<button>Stop</button>
+	</div>
+
+	<div>
+		<table id="portView">
+			<caption>PORT VIEW</caption>
+			<tr>
+				<th>Port 1 </th>
+				<th>Port 2</th>
+				<th>Port 3</th>
+				<th>Port 4</th>
+			</tr>
+			<tr>
+				<td>NONE</td>
+				<td>NONE</td>
+				<td>NONE</td>
+				<td>NONE</td>
+			</tr>
+			<tr>
+				<th>Port A</th>
+				<th>Port B</th>
+				<th>Port C</th>
+				<th>Port D</th>
+			</tr>
+			<tr>
+				<td>NONE</td>
+				<td>NONE</td>
+				<td>NONE</td>
+				<td>NONE</td>
+			</tr>
+		</table>
+	</div>
+
+<div id="codeScreen" onstart="setScreen()"></div>
+<button class="newTrigger" onclick="newTable()">Click to Add a Trigger</button>
+	
+	
+
+	<script>
+		function setScreen() {
+			var  codingScreen = document.createElement("div");
+			codingScreen.className = "codeScreen";
+			return;
+		}
+
+		var triggerCounter = 0;
+
+		function newTable() {
+			console.log("trigger button pressed!");
+			var tableScreen = document.getElementById("codeScreen");
+			var thisTable = document.createElement("table");
+			thisTable.className = "linkPair";
+			var tr = document.createElement("tr");
+
+			var th0 = document.createElement("th");
+			th0.innerHTML = "This is a Trigger Block!";
+			tr.appendChild(th0);
+
+			var td1 = document.createElement("td");
+			var button = makeButton(triggerCounter, true);	
+			td1.appendChild(button);
+
+			tr.appendChild(td1);
+			thisTable.appendChild(tr);
+			tableScreen.appendChild(thisTable);
+			console.log("new trigger created!");
+			console.log("trigger counter = "+ triggerCounter);
+			return;
+		}
+		function newRow(idNum) {
+			console.log("action button pressed in table number " + idNum +"!");
+			var thisTable = document.getElementsByClassName("linkPair")[idNum];
+			console.log(thisTable);
+			thisTable.className = "linkPair";
+			var numRows = thisTable.rows.length;
+			console.log("This table has " + numRows + " rows");
+			var oldBtn = document.getElementsByClassName("newAction");
+			oldBtn[triggerCounter-1].remove();
+			console.log("Old button contains: ")
+			console.log(oldBtn);
+			var row = thisTable.insertRow(numRows);
+			var cell0 = document.createElement("th");
+			thisTable.appendChild(cell0);
+
+			var cell1 = document.createElement("td");
+			var newButton = makeButton(idNum, false);
+			cell1.appendChild(newButton);
+			thisTable.appendChild(cell1);
+
+			console.log("we have " + numRows + " buggy rows being manipulated");
+			console.log("table row length is: " + thisTable.rows.length);
+			var cellData = thisTable.rows[numRows-1].cells;
+			console.log(cellData[1]);
+			cellData[1].innerHTML = "This is an Action Block!";
+			console.log("new action created!");
+			return;
+		}
+
+		function makeButton(idNum, isTrig){
+			
+			var button = document.createElement("button");
+			button.setAttribute("name", "actionButton");
+			button.innerHTML = "Click to add an Action";
+			button.className = "newAction";
+			if (isTrig) {
+				button.setAttribute("id", triggerCounter++)
+			}
+			else {
+				button.setAttribute("id", idNum)
+			}
+			button.setAttribute("onclick","newRow(this.id)");
+			return button;
+
+		}
+	</script>
+</body>
+</html>
