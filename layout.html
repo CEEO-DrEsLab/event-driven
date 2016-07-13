@@ -18,42 +18,51 @@
 	}
 	/* Column column-header class */
 	.column-header {
+		height: 20px;
 		text-align: center;
 		background-color: magenta;
 	}
 	/* Left column (trigger channel sidebar) */
 	.left-column {
+		position: absolute;
 		width: 250px;
-		float: left;
+		left: 0;
 	}
 	/* Right column (action channel sidebar) */
 	.right-column {
+		position: absolute;
 		width: 250px;
-		float: right;
+		right: 0;
 	}
 	/* Center column (code area) */
 	.center-column {
-		margin: auto;
+		position: absolute;
+		left: 250px;
+		right: 250px;
 	}
 	/* Class for left and right sidebars */
 	.sidebar {
-		height: 100%;
+		top: 20px;
+		bottom: 0;
 		background-color: chartreuse;
 		overflow: auto;
-		border: inset;
+		outline: 3px inset;
+		outline-offset: -3px;
 	}
 	/* Class for code areas */
 	.code-area {
-		height: 100%;
+		top: 20px;
+		bottom: 0;
 		background-color: indigo;
 		overflow: auto;
-		border: inset;
+		outline: 3px inset;
+		outline-offset: -3px;
 	}
 
 	/* Channel block */
 	.channel-block {
 		height: 100px;
-		width: 100px;
+		width: 175px;
 		text-align: center;
 		background-color: azure;
 		margin: 10px auto; /* centers horizontally */
@@ -96,23 +105,17 @@
 	</style>
 	<script async>
 	//////////////////////////////////////////////////////////////////////
-	///////////////////////////// Constants //////////////////////////////
+	//////////////////////////// "Constants" /////////////////////////////
 	//////////////////////////////////////////////////////////////////////
 
-	// EV3 Constants
-	var PORT_TYPES = {
-		"1": "sensor",
-		"2": "sensor",
-		"3": "sensor",
-		"4": "sensor",
-		"A": "motor",
-		"B": "motor",
-		"C": "motor",
-		"D": "motor"//,
-		// "BRICK BUTTON": "brick in",
-		// "BRICK LIGHT": "brick out",
-		// "BRICK SOUND": "brick out",
-	};
+	var PORTS = {
+		input: ["1", "2", "3", "4"],
+		output: ["A", "B", "C", "D"]
+	}
+	var BRICK = {
+		input: ["Brick Button"],
+		output: ["Brick Light", "Brick Sound"]
+	}
 	var SENSORS = ["Touch Sensor", "Ultrasonic Sensor", "Color Sensor"];
 	var MOTORS = ["Large Motor", "Medium Motor"];
 
@@ -120,8 +123,6 @@
 	//////////////////////////////////////////////////////////////////////
 	///////////////////////////// Code Model /////////////////////////////
 	//////////////////////////////////////////////////////////////////////
-
-	var portConfig = {}; // {<port#>:<peripheral>}
 
 	var triggerChannels = [];
 
@@ -131,15 +132,9 @@
 
 	var code = {}; //{<channel>:{<trigger>:[<action>,],},};
 
-
 	//////////////////////////////////////////////////////////////////////
-	/////////////////////// Port Data Propogation ////////////////////////
+	////////////////////// Helpful helper Functions //////////////////////
 	//////////////////////////////////////////////////////////////////////
-
-	// The selected options in the select nodes in this list must not appear in the other lists as options
-	var exclusivePortLists = [];
-	var availablePorts = Object.keys(PORT_TYPES);
-	var claimedPorts = [];
 
 	function addNewOption(parent, content) {
 		var newOption = document.createElement("option");
@@ -147,119 +142,156 @@
 		parent.add(newOption);
 	}
 
-	function updatePortLists() {
-		console.log("updating ports")
-		console.log(availablePorts);
-		console.log(claimedPorts);
-		for (i in exclusivePortLists) {
-			// Remove all non-selected options
-			var temp = exclusivePortLists[i].value;
-			exclusivePortLists[i].length = 0;
-			addNewOption(exclusivePortLists[i], temp);
+	function createClassedElement(type, className) {
+		var newElement = document.createElement(type);
+		newElement.className = className;
+		return newElement;
+	}
 
-			// Re-add all available ports to each list
-			for (k in availablePorts) {
-				console.log("adding port " + availablePorts[k] + " to list " + i);
-				addNewOption(exclusivePortLists[i], availablePorts[k]);
+	//////////////////////////////////////////////////////////////////////
+	//////////////////////////// Data Managers ///////////////////////////
+	//////////////////////////////////////////////////////////////////////
+
+	// Global manager of code block channels
+	channelManager = {
+		portConfig: {},
+		listening: {},
+		add: function(block, portID) {
+			if (!this.listening[portID]) {
+				this.listening[portID] = [];
+			}
+			this.listening[portID].push(block);
+			block.innerHTML = this.portConfig[portID];
+		},
+		remove: function(block, portID) {
+			this.listening[portID].splice(this.listening[portID].indexOf(block), 1);
+		},
+		update: function(portID, value) {
+			console.log("updating");
+			this.portConfig[portID] = value;
+			for (i in this.listening[portID]) {
+				this.listening[portID][i].innerHTML = this.portConfig[portID];
 			}
 		}
-		console.log("update done");
-	}
+	};
+
+	// Manages a set of <select> objects s.t. selections are mutually exclusive
+	ExclusiveListManager = function(pool) {
+		return {
+			exclusiveLists: [],
+			unclaimed: pool.slice(),
+			claimed: [],
+			update: function() {
+				for (i in this.exclusiveLists) {
+					// Remove all non-selected options
+					var temp = this.exclusiveLists[i].value;
+					this.exclusiveLists[i].length = 0;
+					addNewOption(this.exclusiveLists[i], temp);
+					// Re-add all available ports to each list
+					for (k in this.unclaimed) {
+						addNewOption(this.exclusiveLists[i], this.unclaimed[k]);
+					}
+				}
+			},
+			claim: function(val) {
+				this.unclaimed.splice(this.unclaimed.indexOf(val), 1);
+				this.claimed.push(val);
+			},
+			declaim: function(val) {
+				this.claimed.splice(this.claimed.indexOf(val), 1);
+				this.unclaimed.push(val);
+			},
+			add: function(selectObject) {
+				selectObject.manager = this;
+				for (i in this.unclaimed) {
+					addNewOption(selectObject, this.unclaimed[i]);
+				}
+				this.exclusiveLists.push(selectObject);
+				selectObject.oldValue = selectObject.value;
+				this.claim(selectObject.value);
+				this.update();
+				// TODO change to event listener
+				selectObject.refreshSelection = function () {
+					this.manager.declaim(this.oldValue);
+					this.manager.claim(this.value);
+					this.oldValue = this.value;
+					this.manager.update();
+				};
+			}
+		};
+	};
+
+	inputPortManager = new ExclusiveListManager(PORTS.input);
+	outputPortManager = new ExclusiveListManager(PORTS.output);
 
 
 	//////////////////////////////////////////////////////////////////////
 	////////////////////////// New Block Setup ///////////////////////////
 	//////////////////////////////////////////////////////////////////////
 
-	// Makes a custom channel (GUI only)
-	function makeChannel() {
-		var peripheral = prompt("Enter Peripheral Name:");
-		var port = prompt("Which port is the " + peripheral + " in?");
-		portConfig[port] = peripheral;
-		return [peripheral, port];
-	}
-
 	function makeTriggerBlock () {
-		var newTrigger = document.createElement("div");
-		newTrigger.className = "code-block trigger-block";
+		var newTrigger = createClassedElement("div", "code-block trigger-block");
 		newTrigger.innerHTML = "Port:";
 		var channelSelect = document.createElement("select");
-		for (i in channels) {
-			addNewOption(channelSelect, channels[i]);
+		for (i in PORTS.input) {
+			addNewOption(channelSelect, PORTS.input[i]);
+		}
+		var content = document.createElement("span");
+		channelManager.add(content, channelSelect.value);
+		channelSelect.oldValue = channelSelect.value;
+		channelSelect.onchange = function() {
+			channelManager.remove(content, channelSelect.oldValue);
+			channelManager.add(content, channelSelect.value);
+			channelSelect.oldValue = channelSelect.value;
 		}
 		newTrigger.appendChild(channelSelect);
+		newTrigger.appendChild(content);
 		return newTrigger;
 	}
 
 	function makeActionBlock () {
-		var newAction = document.createElement("div");
-		newAction.className = "code-block action-block";
+		var newAction = createClassedElement("div", "code-block action-block");
 		newAction.innerHTML = "Port:";
 		var channelSelect = document.createElement("select");
-		for (i in channels) {
-			addNewOption(channelSelect, channels[i]);
+		for (i in PORTS.output) {
+			addNewOption(channelSelect, PORTS.output[i]);
+		}
+		var content = document.createElement("span");
+		channelManager.add(content, channelSelect.value);
+		channelSelect.oldValue = channelSelect.value;
+		channelSelect.onchange = function() {
+			channelManager.remove(content, channelSelect.oldValue);
+			channelManager.add(content, channelSelect.value);
+			channelSelect.oldValue = channelSelect.value;
 		}
 		newAction.appendChild(channelSelect);
+		newAction.appendChild(content);
 		return newAction;
 	}
 
-	// function makeChannelBlock(type) {
-	// 	var channelData = makeChannel();
-	// 	if (channelData[0] != null && channelData[1] != null) {
-	// 		var newChannelBlock = document.createElement("div");
-	// 		newChannelBlock.className = "channel-block";
-	// 		newChannelBlock.innerHTML = channelData[0] + "<br/>(port: " + channelData[1] + ")";
-	// 		return newChannelBlock;
-	// 	} else {
-	// 		return null;
-	// 	}
-	// }
-
 	// Make a new channel block (to be added to a sidebar) with an exclusive port selector
-	// TODO: modularize
-	function makeEditableChannelBlock (type) {
-		var newChannelBlock = document.createElement("div");
-		newChannelBlock.className = "channel-block";
+	function makeChannelBlock (type) {
+		var newChannelBlock = createClassedElement("div", "channel-block");
 		var portSelect = document.createElement("select");
-		for (i in availablePorts) {
-			var newOption = document.createElement("option");
-			newOption.text = availablePorts[i];
-			portSelect.add(newOption);
-		}
-		exclusivePortLists.push(portSelect);
-		portSelect.oldValue = portSelect.value;
-		console.log(availablePorts.splice(availablePorts.indexOf(portSelect.value), 1));
-		claimedPorts.push(portSelect.value);
 
-		updatePortLists();
-
-		portSelect.onchange = function () {	
-			console.log("change detected");
-			console.log(this.oldValue);
-			console.log(this.value);
-
-			availablePorts.push(this.oldValue);
-			claimedPorts.splice(claimedPorts.indexOf(this.oldValue), 1);
-
-			availablePorts.splice(availablePorts.indexOf(this.value), 1);
-			claimedPorts.push(this.value);
-
-			updatePortLists();
-		};
+		(type == "trigger" ? inputPortManager : outputPortManager).add(portSelect);
 
 		var peripheralSelect = document.createElement("select");
 		for (i in (type == "trigger" ? SENSORS : MOTORS)) {
-			var newOption = document.createElement("option");
-			newOption.text = (type == "trigger" ? SENSORS : MOTORS)[i];
-			peripheralSelect.add(newOption);
+			addNewOption(peripheralSelect, (type == "trigger" ? SENSORS : MOTORS)[i]);
 		}
+		channelManager.update(portSelect.value, peripheralSelect.value);
 		peripheralSelect.onchange = function () {
-			portConfig[currentPortSelected] = peripheralSelect.value;
+			channelManager.update(portSelect.value, peripheralSelect.value);
+		}
+		portSelect.onchange = function () {
+			channelManager.update(portSelect.oldValue, undefined);
+			this.refreshSelection(); // added by manager
+			channelManager.update(portSelect.value, peripheralSelect.value);
 		}
 
 		newChannelBlock.appendChild(portSelect);
 		newChannelBlock.appendChild(peripheralSelect);
-
 		return newChannelBlock;
 	}
 
@@ -274,7 +306,7 @@
 			alert("Error creating channel (invalid channel type)");
 			return;
 		}
-		var newChannelBlock = makeEditableChannelBlock(type);
+		var newChannelBlock = makeChannelBlock(type);
 		if (newChannelBlock != null) {
 			button.parentNode.insertBefore(newChannelBlock, button);
 		} else {
@@ -289,11 +321,8 @@
 
 	// Adds a new trigger (with add-action button) above the specified element
 	function addPairAbove(button) {
-		var newPair = document.createElement("div");
-		newPair.className = "pair-container";
-
-		var newButton = document.createElement("button");
-		newButton.className = "action-block";
+		var newPair = createClassedElement("div", "pair-container");
+		var newButton = createClassedElement("button", "action-block");
 		newButton.innerHTML = "+";
 		newButton.setAttribute("onclick", "addActionAbove(this)");
 
