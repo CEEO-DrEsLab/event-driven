@@ -31,29 +31,36 @@
 		/*Set up Link Pair table styles*/
 		.linkPair {
 			border-collapse:collapse;
+			margin-top:10px;
+			height: 100%;
 		}
-		linkPair td{
-			top:0px;
-			bottom:0px;
-			min-width:200px;
+		.linkPair td
+		{
+			vertical-align:top;
+			min-width:222px;
 			min-height:90px;
 			margin:0px;
 			font-weight:bold;
+			border:1px solid red;
+			height: 100%;
 		}
 		.triggerSocket {
 			min-width:200px;
 			min-height:90px;
 			margin:0px;
 			background-color:green;
-			border:1px solid black;
+			font-weight:bold;
+			border:1px dashed white;
+			height: 100%;
 		}
 		.actionSocket {
 			min-width:200px;
 			min-height:90px;
 			margin:0px;
 			background-color:blue;
-			border:1px solid black;
 			font-weight:bold;
+			border:1px dashed white;
+			height:100%;
 		}
 		.triggerBlock {
 			top:0px;
@@ -62,6 +69,7 @@
 			min-height:50px;
 			margin:10px;
 			background-color:lightgreen;
+			font-weight:bold;
 		}
 		.actionBlock {
 			top:0px;
@@ -69,7 +77,9 @@
 			min-width:200px;
 			min-height:50px;
 			margin:10px;
-			background-color:lightblue;
+			background-color:skyblue;
+			font-weight:bold;
+
 		}
 		.newTrigger {
 			margin:10px;
@@ -80,7 +90,6 @@
 		}
 		.codeScreen {
 			width:100%;
-			background-color: grey;
 		}
 	</style>
 </head>
@@ -150,16 +159,15 @@
 			var thisTable = document.createElement("table");
 			thisTable.className = "linkPair";
 			var tr = document.createElement("tr");
-
 			var td0 = document.createElement("td");
-			td0.setAttribute("border-bottom","0px none");
-			td0.setAttribute("background-color","green"); // color triggers green
+			td0.style.backgroundColor = "green"; // color triggers green
+			td0.rowSpan = "100"; // arbitrarily large number
 			//th0.innerHTML = "This is a Trigger Block!";
 			td0 = makeSocket(td0,triggerCounter,triggerCounter, true);
 			tr.appendChild(td0);
 
 			var td1 = document.createElement("td");
-			td1.setAttribute("background-color", "blue"); // color actions blue
+			td1.style.backgroundColor = "blue"; // color actions blue
 			var button = makeButton(triggerCounter, true);	
 			td1.appendChild(button);
 
@@ -183,14 +191,9 @@
 			
 			
 			var row = thisTable.insertRow(numRows);
-			var cell0 = document.createElement("td");
-			cell0.setAttribute("background-color", "green");
-			cell0.setAttribute("border-top","0px none");
-			cell0.setAttribute("border-bottom","0px none");
-			row.appendChild(cell0);
 
 			var cell1 = document.createElement("td");
-			cell1.setAttribute("background-color", "blue");
+			cell1.style.backgroundColor = "blue";
 			var newButton = makeButton(tableID, false);
 			cell1.appendChild(newButton);
 			row.appendChild(cell1);
@@ -221,6 +224,7 @@
 				socket.setAttribute("id", idTxt);
 				socket.setAttribute("ondrop","drop(event)");
 				socket.setAttribute("ondragover","allowDrop(event)");
+				socket.style.height = ""
 				socket.innerHTML = idTxt;
 				socket = makeDragBlock(socket,tableID,idNum, true);
 			}
@@ -254,9 +258,9 @@
 			dragBlock.setAttribute("ondragstart","drag(event)");
 			console.log(dragBlock);
 
-			dragBlock.setAttribute("ondrop", "dummy(event)");// disable inherited socket properties
-			dragBlock.setAttribute("ondragover", "dummy(event)");// disable inherited socket properties
-				
+			dragBlock.setAttribute("ondrop", "disableDrop(event)");// disable inherited socket properties
+			dragBlock.setAttribute("ondragover", "disableDrop(event)");// disable inherited socket properties
+			
 			console.log(dragBlock);
 			dragBlock.innerHTML = idTxt;
 			startSocket.appendChild(dragBlock);
@@ -265,16 +269,24 @@
 
 		function allowDrop(ev) {
 			ev.preventDefault();
+			console.log("allowDrop()");
+			console.log(this);
 		}
 		function drag(ev) {
 			ev.dataTransfer.setData("text", ev.target.id);
+			console.log("drag()");
+			console.log(this);
 		}
 		function drop(ev) {
 			ev.preventDefault();
    			var data = ev.dataTransfer.getData("text");
     		ev.target.appendChild(document.getElementById(data));
+    		console.log("drop()");
+			console.log(this);
 		}
-		function dummy(ev) {}
+		function disableDrop(ev) {
+			ev.stopPropagation()
+		}
 	</script>
 </body>
 </html>
