@@ -1,6 +1,20 @@
 <!-- 
+	Three column layout for a simple event-based programming interface
+
 	Created by Caleb Lucas-Foley
 	2016-07-11
+
+	Most recently updated
+	2016-07-14
+
+	Next steps:
+		Documentation
+		Switch from +button to add blocks to dragging and dropping from the trigger and action banks
+		Switch from my custom select-list-manager objects to a more robust MVC model
+			Potentially link to EV3 brick (IoT)
+		Play around with specific visual cues
+		Consider cross-browser compatibility
+		Demonstrate functionality and technology with a video
 -->
 
 <!DOCTYPE html>
@@ -152,12 +166,14 @@
 	////////////////////// Helpful helper Functions //////////////////////
 	//////////////////////////////////////////////////////////////////////
 
+	// Adds an option with the value content to the select list parent
 	function addNewOption(parent, content) {
 		var newOption = document.createElement("option");
 		newOption.text = content;
 		parent.add(newOption);
 	}
 
+	// Creates and returns an element of the specified type with the specified class
 	function createClassedElement(type, className) {
 		var newElement = document.createElement(type);
 		newElement.className = className;
@@ -169,7 +185,7 @@
 	//////////////////////////////////////////////////////////////////////
 
 	// Global manager of code block channels
-	channelManager = {
+	portManager = {
 		portConfig: {},
 		listening: {},
 		add: function(block, portID) {
@@ -193,18 +209,18 @@
 	// Manages a set of <select> objects s.t. selections are mutually exclusive
 	ExclusiveListManager = function(pool) {
 		return {
-			exclusiveLists: [],
+			lists: [],
 			unclaimed: pool.slice(),
 			claimed: [],
 			update: function() {
-				for (i in this.exclusiveLists) {
+				for (i in this.lists) {
 					// Remove all non-selected options
-					var temp = this.exclusiveLists[i].value;
-					this.exclusiveLists[i].length = 0;
-					addNewOption(this.exclusiveLists[i], temp);
+					var temp = this.lists[i].value;
+					this.lists[i].length = 0;
+					addNewOption(this.lists[i], temp);
 					// Re-add all available ports to each list
 					for (k in this.unclaimed) {
-						addNewOption(this.exclusiveLists[i], this.unclaimed[k]);
+						addNewOption(this.lists[i], this.unclaimed[k]);
 					}
 				}
 			},
@@ -221,7 +237,7 @@
 				for (i in this.unclaimed) {
 					addNewOption(selectObject, this.unclaimed[i]);
 				}
-				this.exclusiveLists.push(selectObject);
+				this.lists.push(selectObject);
 				selectObject.oldValue = selectObject.value;
 				this.claim(selectObject.value);
 				this.update();
@@ -232,15 +248,15 @@
 				});
 			},
 			remove: function(selectObject) {
-				this.exclusiveLists.splice(this.exclusiveLists.indexOf(selectObject), 1);
+				this.lists.splice(this.lists.indexOf(selectObject), 1);
 				this.declaim(selectObject.value);
 				this.update();
 			}
 		};
 	};
 
-	inputPortManager = new ExclusiveListManager(PORTS.input);
-	outputPortManager = new ExclusiveListManager(PORTS.output);
+	inputChannelManager = new ExclusiveListManager(PORTS.input);
+	outputChannelManager = new ExclusiveListManager(PORTS.output);
 
 
 	//////////////////////////////////////////////////////////////////////
@@ -248,53 +264,53 @@
 	//////////////////////////////////////////////////////////////////////
 
 	function makeTriggerBlock () {
-		var newTrigger = createClassedElement("td", "trigger-block");
-		newTrigger.innerHTML = "Port:";
+		var newBlock = createClassedElement("td", "trigger-block");
+		newBlock.innerHTML = "Port:";
 		var portSelect = document.createElement("select");
 		for (i in PORTS.input) {
 			addNewOption(portSelect, PORTS.input[i]);
 		}
 		var content = document.createElement("span");
-		channelManager.add(content, portSelect.value);
+		portManager.add(content, portSelect.value);
 		portSelect.oldValue = portSelect.value;
 		portSelect.addEventListener("change", function () {
-			channelManager.remove(content, this.oldValue);
-			channelManager.add(content, this.value);
+			portManager.remove(content, this.oldValue);
+			portManager.add(content, this.value);
 			this.oldValue = this.value;
 		});
-		newTrigger.appendChild(portSelect);
-		newTrigger.appendChild(document.createElement("br"));
-		newTrigger.appendChild(content);
+		newBlock.appendChild(portSelect);
+		newBlock.appendChild(document.createElement("br"));
+		newBlock.appendChild(content);
 		return newTrigger;
 	}
 
-	function makeActionBlock (actionChannelManager) {
-		var newAction = createClassedElement("td", "action-block");
-		newAction.innerHTML = "Port:";
+	function makeActionBlock (actionportManager) {
+		var newBlock = createClassedElement("td", "action-block");
+		newBlock.innerHTML = "Port:";
 		var portSelect = document.createElement("select");
-		actionChannelManager.add(portSelect);
+		actionportManager.add(portSelect);
 		var content = document.createElement("span");
-		channelManager.add(content, portSelect.value);
+		portManager.add(content, portSelect.value);
 
 		portSelect.addEventListener("change", function () {
-			channelManager.remove(content, this.oldValue);
-			channelManager.add(content, this.value);
+			portManager.remove(content, this.oldValue);
+			portManager.add(content, this.value);
 			this.oldValue = this.value;
 		});
 
 		var deleteButton = createClassedElement("button", "delete-button");
 		deleteButton.innerHTML = "X";
 		deleteButton.addEventListener("click", function () {
-			channelManager.remove(portSelect, portSelect.value);
-			actionChannelManager.remove(portSelect);
-			var rowBelow = newAction.parentNode.nextSibling;
-			newAction.parentNode.replaceChild(rowBelow.firstChild, newAction);
+			portManager.remove(portSelect, portSelect.value);
+			actionportManager.remove(portSelect);
+			var rowBelow = newBlock.parentNode.nextSibling;
+			newBlock.parentNode.replaceChild(rowBelow.firstChild, newAction);
 			rowBelow.parentNode.removeChild(rowBelow);
 		});
-		newAction.appendChild(deleteButton);
-		newAction.appendChild(portSelect);
-		newAction.appendChild(document.createElement("br"));
-		newAction.appendChild(content);
+		newBlock.appendChild(deleteButton);
+		newBlock.appendChild(portSelect);
+		newBlock.appendChild(document.createElement("br"));
+		newBlock.appendChild(content);
 		return newAction;
 	}
 
@@ -302,10 +318,10 @@
 	function makeChannelBlock (type) {
 		var newChannelBlock = createClassedElement("div", "channel-block " + type + "-channel");
 		var portSelect = document.createElement("select");
-		(type == "trigger" ? inputPortManager : outputPortManager).add(portSelect);
+		(type == "trigger" ? inputChannelManager : outputChannelManager).add(portSelect);
 		portSelect.addEventListener("change", function () {
-			channelManager.update(this.oldValue, undefined);
-			channelManager.update(this.value, peripheralSelect.value);
+			portManager.update(this.oldValue, undefined);
+			portManager.update(this.value, peripheralSelect.value);
 			this.oldValue = this.value;
 		});
 
@@ -313,16 +329,16 @@
 		for (i in (type == "trigger" ? SENSORS : MOTORS)) {
 			addNewOption(peripheralSelect, (type == "trigger" ? SENSORS : MOTORS)[i]);
 		}
-		channelManager.update(portSelect.value, peripheralSelect.value);
+		portManager.update(portSelect.value, peripheralSelect.value);
 		peripheralSelect.addEventListener("change", function () {
-			channelManager.update(portSelect.value, this.value);
+			portManager.update(portSelect.value, this.value);
 		});
 
 		var deleteButton = createClassedElement("button", "delete-button");
 		deleteButton.innerHTML = "X";
 		deleteButton.addEventListener("click", function () {
-			(type == "trigger" ? inputPortManager : outputPortManager).remove(portSelect);
-			channelManager.update(portSelect.value, undefined);
+			(type == "trigger" ? inputChannelManager : outputChannelManager).remove(portSelect);
+			portManager.update(portSelect.value, undefined);
 			newChannelBlock.parentNode.removeChild(newChannelBlock);
 		});
 
@@ -347,25 +363,27 @@
 		button.parentNode.insertBefore(newChannelBlock, button);
 	}
 
+	// Adds a single trigger, to which multiple actions can be added, above the specified element
 	function addGroupAbove(button) {
 		var newGroup = createClassedElement("table", "group-container");
-		var newRow = document.createElement("tr");
+		var bottomRow = document.createElement("tr");
 		var newTriggerCell = makeTriggerBlock();
 		newTriggerCell.rowSpan = "1";
-		var actionChannelManager = new ExclusiveListManager(PORTS.output);
+		// Make a manager for this group. All actions in the group will have mutually exclusive port settings
+		var actionPortManager = new ExclusiveListManager(PORTS.output);
 		var newActionButton = createClassedElement("td", "action-block");
 		newActionButton.innerHTML = "+";
 		newActionButton.addEventListener("click", function () {
 			++newTriggerCell.rowSpan;
-			var newActionCell = makeActionBlock(actionChannelManager);
+			var newActionCell = makeActionBlock(actionPortManager);
 			var newTableRow = document.createElement("tr");
 			newGroup.appendChild(newTableRow);
 			newActionButton.parentNode.replaceChild(newActionCell, newActionButton);
 			newTableRow.appendChild(newActionButton);
 		});
-		newRow.appendChild(newTriggerCell);
-		newRow.appendChild(newActionButton);
-		newGroup.appendChild(newRow);
+		bottomRow.appendChild(newTriggerCell);
+		bottomRow.appendChild(newActionButton);
+		newGroup.appendChild(bottomRow);
 		button.parentNode.insertBefore(newGroup, button);
 	}
 	</script>
