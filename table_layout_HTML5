@@ -1,5 +1,5 @@
 <!--
-	Table Test Layout
+	Title: Table Layout HTML5
 	By: Benjamin Zackin
 	Last Modified: 7/14/2016
 -->
@@ -8,7 +8,7 @@
 <html>
 <head>
 	<meta charset="UTF-8">
-	<title>Table Test Layout</title>
+	<title>Table Layout:HTML5</title>
 	<style> 
 		* {
 			margin:0px;
@@ -92,58 +92,7 @@
 			width:100%;
 		}
 	</style>
-</head>
-
-<body>
-	<div id="header">
-		<h1>Interface Trial 2: Tables</h1>
-	</div>
-
-	<div id="nav">
-		<button onclick="location.reload()">New</button>
-		<button onclick="window.open('file:///Users/Zackin/Dropbox/Tufts/Sophomore%20Year/CEEO%20Summer%202016/table_test_layout')">Open</button>
-		<button>Save</button>
-		<button>Print</button>
-		<button>Deploy</button>
-		<button >Run</button>
-		<button>Stop</button>
-	</div>
-
-	<div>
-		<table id="portView">
-			<caption>PORT VIEW</caption>
-			<tr>
-				<th>Port 1 </th>
-				<th>Port 2</th>
-				<th>Port 3</th>
-				<th>Port 4</th>
-			</tr>
-			<tr>
-				<td>NONE</td>
-				<td>NONE</td>
-				<td>NONE</td>
-				<td>NONE</td>
-			</tr>
-			<tr>
-				<th>Port A</th>
-				<th>Port B</th>
-				<th>Port C</th>
-				<th>Port D</th>
-			</tr>
-			<tr>
-				<td>NONE</td>
-				<td>NONE</td>
-				<td>NONE</td>
-				<td>NONE</td>
-			</tr>
-		</table>
-	</div>
-
-<div id="codeScreen" onstart="setScreen()"></div>
-<button class="newTrigger" onclick="newTable()">Click to Add a Trigger</button>
-	
-	
-
+	<script type="text/javascript"></script>
 	<script>
 		function setScreen() {
 			var  codingScreen = document.createElement("div");
@@ -151,7 +100,7 @@
 			return;
 		}
 
-		var triggerCounter = 0;
+		var triggerCounter = 0; // global variable, counts the number of tables we currently have, used for indexing.
 
 		function newTable() {
 			console.log("trigger button pressed!");
@@ -224,7 +173,6 @@
 				socket.setAttribute("id", idTxt);
 				socket.setAttribute("ondrop","drop(event)");
 				socket.setAttribute("ondragover","allowDrop(event)");
-				socket.style.height = ""
 				socket.innerHTML = idTxt;
 				socket = makeDragBlock(socket,tableID,idNum, true);
 			}
@@ -250,8 +198,7 @@
 			}
 			else {
 				dragBlock.className = "actionBlock";
-				var idTxt = "aDrag" + idNum + "@Tab" + tableID;
-				
+				var idTxt = "aDrag" + idNum + "@Tab" + tableID;	
 			}
 			dragBlock.setAttribute("id", idTxt);
 			dragBlock.setAttribute("draggable","true");
@@ -260,7 +207,6 @@
 
 			dragBlock.setAttribute("ondrop", "disableDrop(event)");// disable inherited socket properties
 			dragBlock.setAttribute("ondragover", "disableDrop(event)");// disable inherited socket properties
-			
 			console.log(dragBlock);
 			dragBlock.innerHTML = idTxt;
 			startSocket.appendChild(dragBlock);
@@ -288,5 +234,53 @@
 			ev.stopPropagation()
 		}
 	</script>
+</head>
+
+<body>
+	<div id="header">
+		<h1>Interface Trial 3: Tables + Drag&Drop (HTML5)</h1>
+	</div>
+
+	<div id="nav">
+		<button onclick="location.reload()">New</button>
+		<button onclick="window.open('file:///Users/Zackin/Dropbox/Tufts/Sophomore%20Year/CEEO%20Summer%202016/table_test_layout')">Open</button>
+		<button>Save</button>
+		<button>Print</button>
+		<button>Deploy</button>
+		<button >Run</button>
+		<button>Stop</button>
+	</div>
+
+	<div>
+		<table id="portView">
+			<caption>PORT VIEW</caption>
+			<tr>
+				<th>Port 1 </th>
+				<th>Port 2</th>
+				<th>Port 3</th>
+				<th>Port 4</th>
+			</tr>
+			<tr>
+				<td>NONE</td>
+				<td>NONE</td>
+				<td>NONE</td>
+				<td>NONE</td>
+			</tr>
+			<tr>
+				<th>Port A</th>
+				<th>Port B</th>
+				<th>Port C</th>
+				<th>Port D</th>
+			</tr>
+			<tr>
+				<td>NONE</td>
+				<td>NONE</td>
+				<td>NONE</td>
+				<td>NONE</td>
+			</tr>
+		</table>
+	</div>
+<div id="codeScreen" onstart="setScreen()"></div>
+<button class="newTrigger" onclick="newTable()">Click to Add a Trigger</button>
 </body>
 </html>
