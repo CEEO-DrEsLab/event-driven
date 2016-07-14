@@ -68,7 +68,7 @@
 		margin: 10px auto; /* centers horizontally */
 		border-style: outset;
 	}
-	/* Button to add new blocks */
+	/* Buttons to add new blocks */
 	.button-add {
 		height: 50px;
 		width: 50px;
@@ -76,30 +76,26 @@
 		margin: 10px auto;
 	}
 	/* Code block parent */
-	.code-block {
+	.group-container td {
 		height: 100px;
 		width: 200px;
 		border-style: outset;
+		vertical-align: top;
 	}
 	/* Trigger-specific blocks */
 	.trigger-block {
-		float: right;
-		margin-right: 50%;
 		background-color: forestgreen;
+		border-radius: 0 0 0 25px;
 	}
 	/* Action-specific blocks (also used for button positioning) */
-	div.action-block {
-		background-color: crimson;
-	}
 	.action-block {
-		display: block;
-		position: relative;
-		left: 50%;
+		background-color: crimson;
+		border-radius: 0 0 25px 0;
 	}
 	/* Trigger-action pair container */
-	.pair-container {
-		background-color: cyan;
-		margin: 10px; /* centers horizontally */
+	.group-container {
+/*		background-color: cyan;*/
+		margin: 10px auto; /* centers horizontally */
 		min-height: 100px;
 	}
 	/* Delete Button */
@@ -114,7 +110,7 @@
 		margin: 0;
 		border: 2px inset;
 		color: white;
-		}
+	}
 	</style>
 	<script async>
 	//////////////////////////////////////////////////////////////////////
@@ -247,7 +243,7 @@
 	//////////////////////////////////////////////////////////////////////
 
 	function makeTriggerBlock () {
-		var newTrigger = createClassedElement("div", "code-block trigger-block");
+		var newTrigger = createClassedElement("td", "trigger-block");
 		newTrigger.innerHTML = "Port:";
 		var portSelect = document.createElement("select");
 		for (i in PORTS.input) {
@@ -262,33 +258,36 @@
 			portSelect.oldValue = portSelect.value;
 		}
 		newTrigger.appendChild(portSelect);
+		newTrigger.appendChild(document.createElement("br"));
 		newTrigger.appendChild(content);
 		return newTrigger;
 	}
 
-	function makeActionBlock () {
-		var newAction = createClassedElement("div", "code-block action-block");
+	function makeActionBlock (actionChannelManager) {
+		var newAction = createClassedElement("td", "action-block");
 		newAction.innerHTML = "Port:";
 		var portSelect = document.createElement("select");
-		for (i in PORTS.output) {
-			addNewOption(portSelect, PORTS.output[i]);
-		}
+		actionChannelManager.add(portSelect);
 		var content = document.createElement("span");
 		channelManager.add(content, portSelect.value);
-		portSelect.oldValue = portSelect.value;
+		
 		portSelect.onchange = function() {
 			channelManager.remove(content, portSelect.oldValue);
 			channelManager.add(content, portSelect.value);
-			portSelect.oldValue = portSelect.value;
+			this.refreshSelection(); // Added by manager
 		}
 		var deleteButton = createClassedElement("button", "delete-button");
 		deleteButton.innerHTML = "X";
 		deleteButton.onclick = function () {
 			channelManager.remove(portSelect, portSelect.value);
-			newAction.parentNode.removeChild(newAction);
+			actionChannelManager.remove(portSelect);
+			var rowBelow = newAction.parentNode.nextSibling;
+			newAction.parentNode.replaceChild(rowBelow.firstChild, newAction);
+			rowBelow.parentNode.removeChild(rowBelow);
 		}
 		newAction.appendChild(deleteButton);
 		newAction.appendChild(portSelect);
+		newAction.appendChild(document.createElement("br"));
 		newAction.appendChild(content);
 		return newAction;
 	}
@@ -340,29 +339,29 @@
 			return;
 		}
 		var newChannelBlock = makeChannelBlock(type);
-		if (newChannelBlock != null) {
-			button.parentNode.insertBefore(newChannelBlock, button);
-		} else {
-			alert("Error creating channel (please specify port and peripheral)");
-		}
+		button.parentNode.insertBefore(newChannelBlock, button);
 	}
 
-	// Adds a new action block above the specified element
-	function addActionAbove(button) {
-		button.parentNode.insertBefore(makeActionBlock(), button);
-	}
-
-	// Adds a new trigger (with add-action button) above the specified element
-	function addPairAbove(button) {
-		var newPair = createClassedElement("div", "pair-container");
-		var newButton = createClassedElement("button", "action-block");
-		newButton.innerHTML = "+";
-		newButton.setAttribute("onclick", "addActionAbove(this)");
-
-		newPair.appendChild(makeTriggerBlock());
-		newPair.appendChild(newButton);
-
-		button.parentNode.insertBefore(newPair, button);
+	function addGroupAbove(button) {
+		var newGroup = createClassedElement("table", "group-container");
+		var newRow = document.createElement("tr");
+		var newTriggerCell = makeTriggerBlock();
+		newTriggerCell.rowSpan = "1";
+		var actionChannelManager = new ExclusiveListManager(PORTS.output);
+		var newActionButton = createClassedElement("td", "action-block");
+		newActionButton.innerHTML = "+";
+		newActionButton.onclick = function () {
+			++newTriggerCell.rowSpan;
+			var newActionCell = makeActionBlock(actionChannelManager);
+			var newTableRow = document.createElement("tr");
+			newGroup.appendChild(newTableRow);
+			newActionButton.parentNode.replaceChild(newActionCell, newActionButton);
+			newTableRow.appendChild(newActionButton);
+		};
+		newRow.appendChild(newTriggerCell);
+		newRow.appendChild(newActionButton);
+		newGroup.appendChild(newRow);
+		button.parentNode.insertBefore(newGroup, button);
 	}
 	</script>
 </head>
@@ -378,7 +377,7 @@
 		<button class="button-add" onclick="addChannelBlockAbove(this, 'action')">+</button>
 	</div>
 	<div class="center-column code-area" id="code-area">
-		<button class="button-add" onclick="addPairAbove(this)">+</button>
+		<button class="button-add" onclick="addGroupAbove(this)">+</button>
 	</div>
 </body>
 
