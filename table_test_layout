@@ -1,7 +1,7 @@
 <!--
 	Table Test Layout
 	By: Benjamin Zackin
-	Last Modified: 7/13/2016
+	Last Modified: 7/14/2016
 -->
 
 <!DOCTYPE html>
@@ -29,28 +29,15 @@
 		}
 
 		/*Set up Link Pair table styles*/
-		.linkPair, .linkPair th, .linkPair td {
-			border:1px solid black;
-			margin:10px;
-		}
 		.linkPair {
 			border-collapse:collapse;
 		}
-		.linkPair th {
+		linkPair td{
 			top:0px;
 			bottom:0px;
 			min-width:200px;
 			min-height:90px;
 			margin:0px;
-			background-color:green;
-		}
-		.linkPair td {
-			top:0px;
-			bottom:0px;
-			min-width:200px;
-			min-height:90px;
-			margin:0px;
-			background-color:blue;
 			font-weight:bold;
 		}
 		.triggerSocket {
@@ -58,14 +45,14 @@
 			min-height:90px;
 			margin:0px;
 			background-color:green;
-			border:1px dashed white;
+			border:1px solid black;
 		}
 		.actionSocket {
 			min-width:200px;
 			min-height:90px;
 			margin:0px;
 			background-color:blue;
-			border:1px dashed white;
+			border:1px solid black;
 			font-weight:bold;
 		}
 		.triggerBlock {
@@ -104,12 +91,12 @@
 	</div>
 
 	<div id="nav">
-		<button>New</button>
-		<button>Open</button>
+		<button onclick="location.reload()">New</button>
+		<button onclick="window.open('file:///Users/Zackin/Dropbox/Tufts/Sophomore%20Year/CEEO%20Summer%202016/table_test_layout')">Open</button>
 		<button>Save</button>
 		<button>Print</button>
 		<button>Deploy</button>
-		<button>Run</button>
+		<button >Run</button>
 		<button>Stop</button>
 	</div>
 
@@ -164,12 +151,15 @@
 			thisTable.className = "linkPair";
 			var tr = document.createElement("tr");
 
-			var th0 = document.createElement("th");
+			var td0 = document.createElement("td");
+			td0.setAttribute("border-bottom","0px none");
+			td0.setAttribute("background-color","green"); // color triggers green
 			//th0.innerHTML = "This is a Trigger Block!";
-			th0 = makeSocket(th0, triggerCounter, true);
-			tr.appendChild(th0);
+			td0 = makeSocket(td0,triggerCounter,triggerCounter, true);
+			tr.appendChild(td0);
 
 			var td1 = document.createElement("td");
+			td1.setAttribute("background-color", "blue"); // color actions blue
 			var button = makeButton(triggerCounter, true);	
 			td1.appendChild(button);
 
@@ -180,30 +170,34 @@
 			console.log("trigger counter = "+ triggerCounter);
 			return;
 		}
-		function newRow(idNum) {
-			console.log("action button pressed in table number " + idNum +"!");
-			var thisTable = document.getElementsByClassName("linkPair")[idNum];
+
+		function newRow(tableID) {
+			console.log("action button pressed in table number " + tableID +"!");
+			var thisTable = document.getElementsByClassName("linkPair")[tableID];
 			console.log(thisTable);
 
 			var numRows = thisTable.rows.length;
 			console.log("This table has " + numRows + " rows");
 			thisTable.rows[numRows-1].lastChild.innerHTML= "";
-			thisTable.rows[numRows-1].lastChild = makeSocket(thisTable.rows[numRows-1].lastChild, numRows-1, false);
+			thisTable.rows[numRows-1].lastChild = makeSocket(thisTable.rows[numRows-1].lastChild,tableID,numRows-1,false);
 			
 			
 			var row = thisTable.insertRow(numRows);
-			var cell0 = document.createElement("th");
+			var cell0 = document.createElement("td");
+			cell0.setAttribute("background-color", "green");
+			cell0.setAttribute("border-top","0px none");
+			cell0.setAttribute("border-bottom","0px none");
 			row.appendChild(cell0);
 
 			var cell1 = document.createElement("td");
-			var newButton = makeButton(idNum, false);
+			cell1.setAttribute("background-color", "blue");
+			var newButton = makeButton(tableID, false);
 			cell1.appendChild(newButton);
 			row.appendChild(cell1);
 			return;
 		}
 
 		function makeButton(idNum, isTrig){
-			
 			var button = document.createElement("button");
 			button.setAttribute("name", "actionButton");
 			button.innerHTML = "Click to add an Action";
@@ -217,63 +211,56 @@
 			button.setAttribute("onclick","newRow(this.id)");
 			return button;
 		}
-		function makeSocket(mountLoc,idNum,isTrig) {
+
+
+		function makeSocket(mountLoc,tableID,idNum,isTrig) {
 			var socket = document.createElement("div");
 			if (isTrig) {
 				socket.className = "triggerSocket";
-				var idTxt = "tSock" + idNum;
+				var idTxt = "tSock" + idNum+"@Tab" + tableID;
 				socket.setAttribute("id", idTxt);
 				socket.setAttribute("ondrop","drop(event)");
 				socket.setAttribute("ondragover","allowDrop(event)");
 				socket.innerHTML = idTxt;
-				socket = makeDragBlock(socket,idNum, true);
+				socket = makeDragBlock(socket,tableID,idNum, true);
 			}
 			else {
 				socket.className = "actionSocket";
-				var idTxt = "aSock" + idNum;
+				var idTxt = "aSock" + idNum + "@Tab" + tableID;
 				socket.setAttribute("id", idTxt);
 				socket.setAttribute("ondrop","drop(event)");
 				socket.setAttribute("ondragover","allowDrop(event)");
 				socket.innerHTML = idTxt;
-				socket = makeDragBlock(socket,idNum, false);
+				socket = makeDragBlock(socket,tableID,idNum, false);
 			}
 			mountLoc.appendChild(socket);
 			return mountLoc;
 		}
 
 
-		function makeDragBlock(startSocket,idNum,isTrig) {
+		function makeDragBlock(startSocket,tableID,idNum,isTrig) {
 			var dragBlock = document.createElement("div");
 			if (isTrig) {
 				dragBlock.className = "triggerBlock";
-				var idTxt = "tDrag" + idNum;
-				dragBlock.setAttribute("id", idTxt);
-				dragBlock.setAttribute("draggable","true");
-				dragBlock.setAttribute("ondragstart","drag(event)");
-
-				dragBlock.removeAttribute("ondrop", "dummy()");// disable inherited socket properties
-				dragBlock.setAttribute("ondragover", "dummy()");// disable inherited socket properties
-
-				dragBlock.innerHTML = idTxt;
-				startSocket.appendChild(dragBlock);
-				return startSocket;
+				var idTxt = "tDrag" + idNum + "@Tab" + tableID;
 			}
 			else {
 				dragBlock.className = "actionBlock";
-				var idTxt = "aDrag" + idNum;
-				dragBlock.setAttribute("id", idTxt);
-				dragBlock.setAttribute("draggable","true");
-				dragBlock.setAttribute("ondragstart","drag(event)");
-				console.log(dragBlock);
-
-				dragBlock.setAttribute("ondrop", "dummy(event)");// disable inherited socket properties
-				dragBlock.setAttribute("ondragover", "dummy(event)");// disable inherited socket properties
-
-				console.log(dragBlock);
-				dragBlock.innerHTML = idTxt;
-				startSocket.appendChild(dragBlock);
-				return startSocket;
+				var idTxt = "aDrag" + idNum + "@Tab" + tableID;
+				
 			}
+			dragBlock.setAttribute("id", idTxt);
+			dragBlock.setAttribute("draggable","true");
+			dragBlock.setAttribute("ondragstart","drag(event)");
+			console.log(dragBlock);
+
+			dragBlock.setAttribute("ondrop", "dummy(event)");// disable inherited socket properties
+			dragBlock.setAttribute("ondragover", "dummy(event)");// disable inherited socket properties
+				
+			console.log(dragBlock);
+			dragBlock.innerHTML = idTxt;
+			startSocket.appendChild(dragBlock);
+			return startSocket;
 		}
 
 		function allowDrop(ev) {
