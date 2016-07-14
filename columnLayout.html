@@ -20,7 +20,7 @@
 	.column-header {
 		height: 20px;
 		text-align: center;
-		background-color: magenta;
+		background-color: gold;
 	}
 	/* Left column (trigger channel sidebar) */
 	.left-column {
@@ -44,7 +44,7 @@
 	.sidebar {
 		top: 20px;
 		bottom: 0;
-		background-color: chartreuse;
+		background-color: lightgrey;
 		overflow: auto;
 		outline: 3px inset;
 		outline-offset: -3px;
@@ -53,7 +53,7 @@
 	.code-area {
 		top: 20px;
 		bottom: 0;
-		background-color: indigo;
+		background-color: dimgrey;
 		overflow: auto;
 		outline: 3px inset;
 		outline-offset: -3px;
@@ -64,9 +64,16 @@
 		height: 100px;
 		width: 175px;
 		text-align: center;
-		background-color: azure;
 		margin: 10px auto; /* centers horizontally */
 		border-style: outset;
+	}
+	/* Trigger channel */
+	.trigger-channel {
+		background-color: lightgreen;
+	}
+	/* Action channel */
+	.action-channel {
+		background-color: lightsalmon;
 	}
 	/* Buttons to add new blocks */
 	.button-add {
@@ -218,13 +225,11 @@
 				selectObject.oldValue = selectObject.value;
 				this.claim(selectObject.value);
 				this.update();
-				// TODO change to event listener
-				selectObject.refreshSelection = function () {
+				selectObject.addEventListener("change", function () {
 					this.manager.declaim(this.oldValue);
 					this.manager.claim(this.value);
-					this.oldValue = this.value;
 					this.manager.update();
-				};
+				});
 			},
 			remove: function(selectObject) {
 				this.exclusiveLists.splice(this.exclusiveLists.indexOf(selectObject), 1);
@@ -252,11 +257,11 @@
 		var content = document.createElement("span");
 		channelManager.add(content, portSelect.value);
 		portSelect.oldValue = portSelect.value;
-		portSelect.onchange = function() {
-			channelManager.remove(content, portSelect.oldValue);
-			channelManager.add(content, portSelect.value);
-			portSelect.oldValue = portSelect.value;
-		}
+		portSelect.addEventListener("change", function () {
+			channelManager.remove(content, this.oldValue);
+			channelManager.add(content, this.value);
+			this.oldValue = this.value;
+		});
 		newTrigger.appendChild(portSelect);
 		newTrigger.appendChild(document.createElement("br"));
 		newTrigger.appendChild(content);
@@ -270,21 +275,22 @@
 		actionChannelManager.add(portSelect);
 		var content = document.createElement("span");
 		channelManager.add(content, portSelect.value);
-		
-		portSelect.onchange = function() {
-			channelManager.remove(content, portSelect.oldValue);
-			channelManager.add(content, portSelect.value);
-			this.refreshSelection(); // Added by manager
-		}
+
+		portSelect.addEventListener("change", function () {
+			channelManager.remove(content, this.oldValue);
+			channelManager.add(content, this.value);
+			this.oldValue = this.value;
+		});
+
 		var deleteButton = createClassedElement("button", "delete-button");
 		deleteButton.innerHTML = "X";
-		deleteButton.onclick = function () {
+		deleteButton.addEventListener("click", function () {
 			channelManager.remove(portSelect, portSelect.value);
 			actionChannelManager.remove(portSelect);
 			var rowBelow = newAction.parentNode.nextSibling;
 			newAction.parentNode.replaceChild(rowBelow.firstChild, newAction);
 			rowBelow.parentNode.removeChild(rowBelow);
-		}
+		});
 		newAction.appendChild(deleteButton);
 		newAction.appendChild(portSelect);
 		newAction.appendChild(document.createElement("br"));
@@ -294,32 +300,31 @@
 
 	// Make a new channel block (to be added to a sidebar) with an exclusive port selector
 	function makeChannelBlock (type) {
-		var newChannelBlock = createClassedElement("div", "channel-block");
+		var newChannelBlock = createClassedElement("div", "channel-block " + type + "-channel");
 		var portSelect = document.createElement("select");
-
 		(type == "trigger" ? inputPortManager : outputPortManager).add(portSelect);
+		portSelect.addEventListener("change", function () {
+			channelManager.update(this.oldValue, undefined);
+			channelManager.update(this.value, peripheralSelect.value);
+			this.oldValue = this.value;
+		});
 
 		var peripheralSelect = document.createElement("select");
 		for (i in (type == "trigger" ? SENSORS : MOTORS)) {
 			addNewOption(peripheralSelect, (type == "trigger" ? SENSORS : MOTORS)[i]);
 		}
 		channelManager.update(portSelect.value, peripheralSelect.value);
-		peripheralSelect.onchange = function () {
-			channelManager.update(portSelect.value, peripheralSelect.value);
-		}
-		portSelect.onchange = function () {
-			channelManager.update(portSelect.oldValue, undefined);
-			this.refreshSelection(); // added by manager
-			channelManager.update(portSelect.value, peripheralSelect.value);
-		}
+		peripheralSelect.addEventListener("change", function () {
+			channelManager.update(portSelect.value, this.value);
+		});
 
 		var deleteButton = createClassedElement("button", "delete-button");
 		deleteButton.innerHTML = "X";
-		deleteButton.onclick = function () {
+		deleteButton.addEventListener("click", function () {
 			(type == "trigger" ? inputPortManager : outputPortManager).remove(portSelect);
 			channelManager.update(portSelect.value, undefined);
 			newChannelBlock.parentNode.removeChild(newChannelBlock);
-		}
+		});
 
 		newChannelBlock.appendChild(deleteButton);
 		newChannelBlock.appendChild(portSelect);
@@ -350,14 +355,14 @@
 		var actionChannelManager = new ExclusiveListManager(PORTS.output);
 		var newActionButton = createClassedElement("td", "action-block");
 		newActionButton.innerHTML = "+";
-		newActionButton.onclick = function () {
+		newActionButton.addEventListener("click", function () {
 			++newTriggerCell.rowSpan;
 			var newActionCell = makeActionBlock(actionChannelManager);
 			var newTableRow = document.createElement("tr");
 			newGroup.appendChild(newTableRow);
 			newActionButton.parentNode.replaceChild(newActionCell, newActionButton);
 			newTableRow.appendChild(newActionButton);
-		};
+		});
 		newRow.appendChild(newTriggerCell);
 		newRow.appendChild(newActionButton);
 		newGroup.appendChild(newRow);
