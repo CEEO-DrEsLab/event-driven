@@ -1,0 +1,78 @@
+{
+/****************************************************************************/
+/**************************EV3 TRIGGERS AND ACTIONS**************************/
+/****************************************************************************/
+
+/*MOTORS*/
+type: ["large_motor", "medium_motor"]
+port: ["outA", "outB", "outC", "outD"]
+mode: ["on_right", "on_left", "off"]
+level: ["high", "medium", "low"]
+stop_type: ["break", "coast"]
+
+/*TOUCH*/
+type: "touch_sensor"
+port: ["in1","in2","in3","in4"]
+press_state: ["press","release","count"]
+count_threshold: "count_num"
+
+/*ULTRASONIC*/
+type: "ultrasonic_sensor"
+port: ["in1","in2","in3","in4"]
+detect_mode: ["enter","exit","listen"]
+range_threshold: "range"
+units: ["cm", "inch"]
+sound_detect: "detected"
+
+/*COLOR*/
+type: "color_sensor"
+port: ["in1","in2","in3","in4"]
+mode: ["color_detect","reflected","ambient","rgb"]
+color: ["no_color","black","blue","green","yellow","red","white","brown"]
+light_threshold: ["reflect_val","ambient_val"]
+rgb_threshold: ["red_val","green_val", "blue_val"]
+
+/*GYRO SENSOR*/
+type: "gyro_sensor"
+port: ["in1","in2","in3","in4"]
+mode: ["rotation", "rate_detect"]
+angle_threshold: "degrees"
+rate_threshold: "deg_per_sec"
+
+/*BRICK BUTTIONS*/
+type: ["brick_dpad_up","brick_dpad_down","brick_dpad_left","brick_dpad_right","brick_dpad_enter","brick_dpad_cancel"]
+press_state: ["press","release","count"]
+count_threshold: "count_num"
+
+/*BRICK SOUNDS*/
+type: "play_sound"
+play_mode: ["play_note","play_tone","play_from_file"]
+note: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"]
+tone: "frequency"
+file: "file_name"
+volume: "vol"
+duration: "msec"
+
+/*INFRARED SENSOR*/
+type: "infrared_sensor"
+port: ["in1","in2","in3","in4"]
+detect_mode: ["proximity", "beacon", "remote"]
+channel_setting: "ir_channel"
+range_threshold: "range"
+heading_threshold: "heading"
+beacon_detect: "detected"
+button_detect: "button_id"
+
+/*TEMPERATURE SENSOR*/
+type: "temperature_sensor"
+port: ["in1","in2","in3","in4"]
+scale: ["celcius","fahrenheit"]
+temperature_threshold: "temp"
+
+/*NXT_SOUND_SENSOR*/
+type: "nxt_sound_sensor"
+port: ["in1","in2","in3","in4"]
+measure_mode: "dB"
+volume: "vol"
+
+}
