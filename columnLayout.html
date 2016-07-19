@@ -9,7 +9,7 @@
 
 	Next steps:
 		Documentation
-	*	Switch from +button to add blocks to dragging and dropping from the trigger and action banks
+		Switch from +button to add blocks to dragging and dropping from the trigger and action banks
 		Switch from my custom select-list-manager objects to a more robust MVC model
 			Potentially link to EV3 brick (IoT)
 		Play around with specific visual cues
@@ -17,7 +17,7 @@
 		Demonstrate functionality and technology with a video
 -->
 
-<!DOCchannelType html>
+<!DOCType html>
 <html>
 <head>
 	<meta charset="utf-8">
@@ -79,7 +79,10 @@
 		width: 175px;
 		text-align: center;
 		margin: 10px auto; /* centers horizontally */
-		border-style: outset;
+		border: 2px outset;
+	}
+	.channel-block, .action-block, .trigger-block:hover {
+		cursor: grab;
 	}
 	/* Trigger channel */
 	.trigger-channel {
@@ -105,21 +108,24 @@
 	.trigger-block {
 		background-color: forestgreen;
 		border-radius: 0 0 0 25px;
-		border-style: outset;
+		border: 2px outset;
 		vertical-align: top;
+		pointer-events: auto;
 	}
 	/* Action-specific blocks (also used for button positioning) */
 	.action-block {
 		background-color: crimson;
 		border-radius: 0 0 25px 0;
-		border-style: outset;
+		border: 2px outset;
 		vertical-align: top;
+		pointer-events: auto;
 	}
 	/* Trigger-action pair container */
 	.group-container {
 /*		background-color: cyan;*/
 		margin: 10px auto; /* centers horizontally */
 		min-height: 100px;
+		pointer-events: none;
 	}
 	/* Delete Button */
 	.delete-button {
@@ -151,9 +157,11 @@
 		text-align: center;
 		color: black;
 		font-size: 50px;
+		pointer-events: none;
 	}
 	.invisible {
 		visibility: hidden;
+		border: 2px solid;
 	}
 	.left-cell {
 		border-radius: 0 0 0 25px;
@@ -161,9 +169,10 @@
 	.right-cell {
 		border-radius: 0 0 25px 0;
 	}
-	.group-container * {
+	table, tr, span {
 		pointer-events: none;
 	}
+
 	</style>
 	<script async>
 	//////////////////////////////////////////////////////////////////////
@@ -186,13 +195,7 @@
 	///////////////////////////// Code Model /////////////////////////////
 	//////////////////////////////////////////////////////////////////////
 
-	// var triggerChannels = [];
-
-	// var actionChannels = [];
-
-	// var channels = ["tempchannel1", "tempchannel2"];
-
-	// var code = {}; //{<channel>:{<trigger>:[<action>,],},};
+	// dust
 
 	//////////////////////////////////////////////////////////////////////
 	////////////////////// Helpful helper Functions //////////////////////
@@ -277,7 +280,7 @@
 					this.manager.declaim(this.oldValue);
 					this.manager.claim(this.value);
 					this.manager.update();
-				});
+				}, false);
 			},
 			remove: function(selectObject) {
 				this.lists.splice(this.lists.indexOf(selectObject), 1);
@@ -295,22 +298,147 @@
 	////////////////////////// New Block Setup ///////////////////////////
 	//////////////////////////////////////////////////////////////////////
 
+	function makeBlockOutline (side) {
+		var dropZone = createClassedElement("td", "cell-outline " + side + "-cell");
+		dropZone.id = "drop-zone";
+		dropZone.innerHTML = "+";
+		return dropZone;
+	}
+
 	function makeTriggerBlock (port) {
 		var newBlock = createClassedElement("td", "trigger-block");
-		newBlock.innerHTML = "Port:";
+		var portLabel = document.createElement("span");
+		portLabel.innerHTML = "Port: ";
 		var portSelect = document.createElement("span");
 		portSelect.innerHTML = port;
 		var content = document.createElement("span");
 		portManager.add(content, port);
+		newBlock.appendChild(portLabel);
 		newBlock.appendChild(portSelect);
 		newBlock.appendChild(document.createElement("br"));
 		newBlock.appendChild(content);
+
+		newBlock.rowSpan = 2;
+
+		var draggingOver = false;
+
+		newBlock.addEventListener("drop", function (ev) {
+			ev.preventDefault();
+			ev.stopPropagation();
+			data = JSON.parse(ev.dataTransfer.getData("text/plain"));
+			if (data.type == "action-channel") {
+				// Replace the dotted outline with the new block
+				this.parentNode.parentNode.lastChild.replaceChild(
+					makeActionBlock(data.port), this.parentNode.parentNode.lastChild.lastChild);
+				draggingOver = false;
+			} else if (data.type == "action-block") {
+				// Replace the dotted outline with the MOVED block
+				var toMove = removeActionBlock(document.getElementById("currently-dragging"));
+				this.parentNode.parentNode.lastChild.replaceChild(
+					toMove, this.parentNode.parentNode.lastChild.lastChild);
+				draggingOver = false;
+			} else if (data.type == "trigger-block") {
+				this.style.outline = "";
+				swapTriggers(this, document.getElementById("currently-dragging"));
+				draggingOver = false;
+			} else if (data.type == "trigger-channel") {
+				this.style.outline = "";
+				portManager.remove(content, port);
+				port = data.port;
+				portSelect.innerHTML = port;
+				portManager.add(content, port);
+				draggingOver = false;
+			}
+		}, false);
+		newBlock.addEventListener("dragover", function (ev) {
+			ev.preventDefault();
+			ev.stopPropagation();
+		}, false);
+		newBlock.addEventListener("dragenter", function (ev) {
+			ev.preventDefault();
+			ev.stopPropagation();
+			data = JSON.parse(ev.dataTransfer.getData("text/plain"));
+			if (data.type == "action-channel" || data.type == "action-block") {
+				if (!draggingOver) {
+					draggingOver = true;
+					// Show an outline of the spot where the action will go
+					if (this.parentNode.nextSibling || this.nextSibling.firstChild) {
+						// there is more than one row, or the block after this one has data in it
+						var newRow = document.createElement("tr");
+						newRow.appendChild(makeBlockOutline("right"));
+						++this.rowSpan;
+						this.parentNode.parentNode.appendChild(newRow);
+					} else {
+						this.parentNode.replaceChild(makeBlockOutline("right"), this.parentNode.lastChild);
+					}
+				}
+			} else if (data.type == "trigger-block" || data.type == "trigger-channel") {
+				if (!draggingOver) {
+					draggingOver = true;
+					this.style.outline = "2px dashed";
+				}
+			}
+		}, false);
+		newBlock.addEventListener("dragleave", function (ev) {
+			ev.preventDefault();
+			ev.stopPropagation();
+			data = JSON.parse(ev.dataTransfer.getData("text/plain"));
+			if (data.type == "action-channel" || data.type == "action-block") {
+				draggingOver = false;
+				// Stop showing the outline
+				if (this.parentNode.nextSibling) {
+					// More than one row right now
+					this.parentNode.parentNode.removeChild(this.parentNode.parentNode.lastChild);
+				} else {
+					this.parentNode.replaceChild(
+						createClassedElement("td", "invisible right-cell"), this.parentNode.lastChild);
+				}
+			} else if (data.type == "trigger-block" || data.type == "trigger-channel") {
+				draggingOver = false;
+				this.style.outline = "";
+			}
+		}, false);
+
+		// make it draggable!
+		newBlock.draggable = true;
+		newBlock.addEventListener("dragstart", function (ev) {
+			ev.stopPropagation();
+			var data = {
+				type: "trigger-block",
+				port: port,
+			};
+			ev.dataTransfer.setData("text/plain", JSON.stringify(data));
+			ev.dataTransfer.setDragImage(document.getElementById("trigger-drag-thumb"), 50, 25);
+			this.style.opacity = 0.5;
+			this.id = "currently-dragging";
+		}, false);
+		newBlock.addEventListener("dragend", function (ev) {
+			ev.stopPropagation();
+			this.id = "";
+			this.style.opacity = 1;
+		}, false);
 		return newBlock;
+	}
+
+	function swapTriggers (trigger1, trigger2) {
+		if (trigger1 === trigger2) {
+			return;
+		}
+		// swap rowSpan values
+		trigger1.rowSpan ^= trigger2.rowSpan;
+		trigger2.rowSpan ^= trigger1.rowSpan;
+		trigger1.rowSpan ^= trigger2.rowSpan;
+		// swap DOM positions
+		var temp = createClassedElement("td", "trigger-block");
+		trigger1.parentNode.replaceChild(temp, trigger1);
+		trigger2.parentNode.replaceChild(trigger1, trigger2);
+		temp.parentNode.replaceChild(trigger2, temp);
 	}
 
 	function makeActionBlock (port) {
 		var newBlock = createClassedElement("td", "action-block");
-		newBlock.innerHTML = "Port:";
+		var portLabel = document.createElement("span");
+		portLabel.innerHTML = "Port: ";
 		var portSelect = document.createElement("span");
 		portSelect.innerHTML = port;
 		var content = document.createElement("span");
@@ -325,10 +453,113 @@
 		// 	rowBelow.parentNode.removeChild(rowBelow);
 		// });
 		//newBlock.appendChild(deleteButton);
+
+		// make the block droppable!
+		draggingOver = false;
+
+		newBlock.addEventListener("dragenter", function (ev) {
+			console.log(ev);
+			console.log(draggingOver);
+			ev.preventDefault();
+			ev.stopPropagation();
+			data = JSON.parse(ev.dataTransfer.getData("text/plain"));
+			if (data.type == "action-channel" || data.type == "action-block") {
+				if (!draggingOver) {
+					draggingOver = true;
+					// show the dotted outline below this block
+					var newRow = document.createElement("tr");
+					newRow.appendChild(makeBlockOutline("right"));
+					++this.parentNode.parentNode.firstChild.firstChild.rowSpan;
+					if (this.parentNode.nextSibling) {
+						// this is not in the last row
+						this.parentNode.parentNode.insertBefore(newRow, this.parentNode.nextSibling);
+					} else {
+						// this is in the last row
+						this.parentNode.parentNode.appendChild(newRow);
+					}
+				}
+			}
+		}, false);
+		newBlock.addEventListener("dragover", function (ev) {
+			ev.preventDefault();
+			ev.stopPropagation();
+		}, false);
+		newBlock.addEventListener("drop", function (ev) {
+			console.log(ev);
+			ev.preventDefault();
+			ev.stopPropagation();
+			data = JSON.parse(ev.dataTransfer.getData("text/plain"));
+			if (data.type == "action-channel") {
+				// Replace the dotted outline with the new block
+				this.parentNode.nextSibling.replaceChild(
+					makeActionBlock(data.port), this.parentNode.nextSibling.firstChild);
+				draggingOver = false;
+			} else if (data.type == "action-block") {
+				if (this !== document.getElementById("currently-dragging")) {
+					// Replace the dotted outline with the MOVED block
+					var toMove = removeActionBlock(document.getElementById("currently-dragging"));
+					this.parentNode.nextSibling.replaceChild(toMove, this.parentNode.nextSibling.lastChild);
+				} else {
+					// remove the outline
+					this.parentNode.parentNode.removeChild(this.parentNode.nextSibling);
+				}
+				draggingOver = false;
+			}
+		}, false);
+		newBlock.addEventListener("dragleave", function (ev) {
+			console.log(ev);
+			ev.preventDefault();
+			ev.stopPropagation();
+			data = JSON.parse(ev.dataTransfer.getData("text/plain"));
+			if (data.type == "action-channel" || data.type == "action-block") {
+				draggingOver = false;
+				this.parentNode.parentNode.removeChild(this.parentNode.nextSibling);
+			}
+		}, false);
+
+		// make the block draggable
+		newBlock.draggable = true;
+		newBlock.addEventListener("dragstart", function (ev) {
+			ev.stopPropagation();
+			var data = {
+				type: "action-block",
+				port: port,
+			};
+			ev.dataTransfer.setData("text/plain", JSON.stringify(data));
+			ev.dataTransfer.setDragImage(document.getElementById("action-drag-thumb"), 50, 25);
+			this.id = "currently-dragging";
+			this.style.opacity = 0.5;
+		}, false);
+		newBlock.addEventListener("dragend", function (ev) {
+			ev.preventDefault();
+			ev.stopPropagation();
+			this.id = "";
+			this.style.opacity = 1;
+		}, false);
+
+		newBlock.appendChild(portLabel);
 		newBlock.appendChild(portSelect);
 		newBlock.appendChild(document.createElement("br"));
 		newBlock.appendChild(content);
 		return newBlock;
+	}
+
+	function removeActionBlock (action) {
+		if (action.parentNode.nextSibling) {
+			// action is not in last row
+			// replace action with next row's action, remove the now empty next row
+			var rowBelow = action.parentNode.nextSibling;
+		 	action.parentNode.replaceChild(rowBelow.firstChild, action);
+		 	rowBelow.parentNode.removeChild(rowBelow);
+		} else if (action.parentNode.previousSibling) {
+			// action is in last row, and is not the only action
+			// remove the row action is in
+			action.parentNode.parentNode.removeChild(action.parentNode);
+		} else {
+			// only one action
+			action.parentNode.replaceChild(createClassedElement("td", "invisible right-cell"), action);
+		}
+		return action;
 	}
 
 	// Make a new channel block (to be added to a sidebar) with an exclusive port selector
@@ -366,13 +597,20 @@
 		// Make the new channel draggable!
 		newChannelBlock.draggable = true;
 		newChannelBlock.addEventListener("dragstart", function (ev) {
+			ev.stopPropagation();
 			var data = {
-				type: channelType,
-				port: portSelect.value
+				type: channelType + "-channel",
+				port: portSelect.value,
 			};
 			ev.dataTransfer.setData("text/plain", JSON.stringify(data));
 			ev.dataTransfer.setDragImage(document.getElementById(channelType + "-drag-thumb"), 50, 25);
-		});
+			newChannelBlock.id = "currently-dragging";
+		}, false);
+		newChannelBlock.addEventListener("dragend", function (ev) {
+			ev.preventDefault();
+			ev.stopPropagation();
+			newChannelBlock.id = "";
+		}, false);
 
 		return newChannelBlock;
 	}
@@ -396,82 +634,27 @@
 	function addTrigger(parent, triggerPort) {
 		var group = createClassedElement("table", "group-container");
 		var topRow = document.createElement("tr");
-		var triggerCell = makeTriggerBlock(triggerPort);
-		triggerCell.rowSpan = 2;
-
-		var emptyCell = createClassedElement("td", "invisible right-cell");
-		var actionDropZone = createClassedElement("td", "cell-outline right-cell");
-		actionDropZone.innerHTML = "+";
-
-		var numRows = 1;
-
-		var draggingOver = false;
-
-		group.addEventListener("drop", function (ev) {
-			ev.preventDefault();
-			ev.stopPropagation();
-			// move outline to new row
-			var data = JSON.parse(ev.dataTransfer.getData("text/plain")).port;
-			// Replace the dotted outline with the new block
-			++triggerCell.rowSpan;
-			group.lastChild.replaceChild(makeActionBlock(data), group.lastChild.lastChild);
-			++numRows;
-			draggingOver = false;
-		}, false);
-		group.addEventListener("dragover", function (ev) {
-			ev.preventDefault();
-			ev.stopPropagation();
-		});
-		group.addEventListener("dragenter", function (ev) {
-			ev.preventDefault();
-			ev.stopPropagation();
-			if (!draggingOver) {
-				draggingOver = true;
-				// Show an outline of the spot where the action will go
-				if (numRows > 1) {
-					var newRow = document.createElement("tr");
-					newRow.appendChild(actionDropZone);
-					++triggerCell.rowSpan;
-					group.appendChild(newRow);
-				} else {
-					topRow.replaceChild(actionDropZone, emptyCell);
-				}
-			}
-		}, false);
-		group.addEventListener("dragleave", function (ev) {
-			ev.preventDefault();
-			ev.stopPropagation();
-			draggingOver = false;
-			// Stop showing the outline
-			if (numRows > 1) {
-				group.removeChild(actionDropZone.parentNode);
-			} else {
-				topRow.replaceChild(emptyCell, actionDropZone);
-			}
-		}, false);
-		topRow.appendChild(triggerCell);
-		topRow.appendChild(emptyCell);
+		topRow.appendChild(makeTriggerBlock(triggerPort));
+		topRow.appendChild(createClassedElement("td", "invisible right-cell"));
 		group.appendChild(topRow);
-		//group.appendChild(nextRow);
 		parent.appendChild(group);
 	}
 
 	function addTriggerOutline(parent) {
 		var group = createClassedElement("table", "group-container");
 		group.style.pointerEvents = "none";
-		group.id = "trigger-outline";
+		group.id = "group-drop-zone";
 		var row = document.createElement("tr");
-		var triggerOutlineCell = createClassedElement("td", "cell-outline left-cell");
-		triggerOutlineCell.innerHTML = "+";
+		var triggerDropZone = makeBlockOutline("left");
 		var emptyCell = createClassedElement("td", "invisible right-cell");
-		row.appendChild(triggerOutlineCell);
+		row.appendChild(triggerDropZone);
 		row.appendChild(emptyCell);
 		group.appendChild(row);
 		parent.appendChild(group);
 	}
 
 	function removeTriggerOutline() {
-		var toRemove = document.getElementById("trigger-outline");
+		var toRemove = document.getElementById("group-drop-zone");
 		toRemove.parentNode.removeChild(toRemove);
 	}
 
@@ -493,13 +676,17 @@
 	<div class="center-column code-area" id="code-area"></div>
 
 	<script>
-	// TODO remove
+	// TODO move
+	var draggingOver = false;
+
 	document.getElementById("code-area").addEventListener("drop", function (ev) {
 		ev.preventDefault();
-		if (JSON.parse(ev.dataTransfer.getData("text/plain")).type == "trigger") {
+		var data = JSON.parse(ev.dataTransfer.getData("text/plain"));
+		if (data.type == "trigger-channel") {
 			removeTriggerOutline();
 			var data = JSON.parse(ev.dataTransfer.getData("text/plain")).port;
 			addTrigger(this, data);
+			draggingOver = false;
 		}
 	});
 	document.getElementById("code-area").addEventListener("dragover", function (ev) {
@@ -507,13 +694,19 @@
 	});
 	document.getElementById("code-area").addEventListener("dragenter", function (ev) {
 		ev.preventDefault();
-		if (JSON.parse(ev.dataTransfer.getData("text/plain")).type == "trigger") {
-			addTriggerOutline(this);
+		var data = JSON.parse(ev.dataTransfer.getData("text/plain"));
+		if (data.type == "trigger-channel") {
+			if (!draggingOver) {
+				draggingOver = true;
+				addTriggerOutline(this);
+			}
 		}
 	});
 	document.getElementById("code-area").addEventListener("dragleave", function (ev) {
 		ev.preventDefault();
-		if (JSON.parse(ev.dataTransfer.getData("text/plain")).type == "trigger") {
+		var data = JSON.parse(ev.dataTransfer.getData("text/plain"));
+		if (data.type == "trigger-channel") {
+			draggingOver = false;
 			removeTriggerOutline();
 		}
 	});
