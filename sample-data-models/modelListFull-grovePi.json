@@ -4,46 +4,60 @@
 /*****************************************************************************/
 
 /*SOUND SENSOR*/
-type:"grove_sound_sensor"
-port: ["A0","A1","A2"]
-sound_detect: "detected"
+	"sound": {
+		"peripheral_type":"grove_sound_sensor",
+		"port": ["A0","A1","A2"],
+		"sound_detect": "detected"
+	},
 
 /*ULTRASONIC SENSOR*/
-type: "grove_ultrasonic_sensor"
-port: ["D2","D3","D4","D5","D6","D7","D8"]
-range_threshold: "range_in_cm"
+	"ultrasonic": {
+		"peripheral_type": "grove_ultrasonic_sensor",
+		"port": ["D2","D3","D4","D5","D6","D7","D8"],
+		"range_threshold": "range_in_cm"
+	},
 
 /*LIGHT SENSOR*/
-type: "grove_light_sensor"
-port: ["A0","A1","A2"]
-light_value: "light_val"
+	"light": {
+		"peripheral_type": "grove_light_sensor",
+		"port": ["A0","A1","A2"],
+		"light_value": "light_val"
+	},
 
 /*MOTION SENSOR*/
-type: "grove_motion_sensor"
-port: ["D2","D3","D4","D5","D6","D7","D8"]
-motion_detect: "detected"
+	"motion": {
+		"peripheral_type": "grove_motion_sensor",
+		"port": ["D2","D3","D4","D5","D6","D7","D8"],
+		"motion_detect": "detected"
+	},
 
 /*INFRARED SENSOR*/
-type: "grove_infrared_sensor"
-port: ["D2","D3","D4","D5","D6","D7","D8"]
-ir_detect: "detected"
+	"infrared": {
+		"peripheral_type": "grove_infrared_sensor",
+		"port": ["D2","D3","D4","D5","D6","D7","D8"],
+		"ir_detect": "detected"
+	},
 
 /*BUTTON*/
-type: "grove_button"
-port: ["D2","D3","D4","D5","D6","D7","D8"]
-press_state: ["press", "release"]
+	"button": {
+		"peripheral_type": "grove_button",
+		"port": ["D2","D3","D4","D5","D6","D7","D8"],
+		"press_state": ["press", "release"]
+	},
 
 /*BUZZER*/
-type: "grove_buzzer"
-port: ["A0","A1","A2","D2","D3","D4","D5","D6","D7","D8"]
-frequency: "freq"
-duration: "msec"
-
+	"buzzer": {
+		"peripheral_type": "grove_buzzer",
+		"port": ["A0","A1","A2","D2","D3","D4","D5","D6","D7","D8"],
+		"frequency": "freq",
+		"duration": "msec"
+	},
+	
 /*LED*/
-type: "grove_led"
-port: ["D2","D3","D4","D5","D6","D7","D8"]
-led_status: ["on","off"]
-
-
+	"led": {
+		"peripheral_type": "grove_led",
+		"port": ["D2","D3","D4","D5","D6","D7","D8"],
+		"led_status": ["on","off"]
+	}
 
 }
