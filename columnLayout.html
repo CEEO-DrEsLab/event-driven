@@ -4,12 +4,11 @@
 	Created by Caleb Lucas-Foley
 	2016-07-11
 
-	Most recently updated
+	Most recent update
 	2016-07-14
 
 	Next steps:
 		Documentation
-		Switch from +button to add blocks to dragging and dropping from the trigger and action banks
 		Switch from my custom select-list-manager objects to a more robust MVC model
 			Potentially link to EV3 brick (IoT)
 		Play around with specific visual cues
@@ -189,12 +188,98 @@
 	var SENSORS = ["Touch Sensor", "Ultrasonic Sensor", "Color Sensor"];
 	var MOTORS = ["Large Motor", "Medium Motor"];
 
+	// Default settings for every EV3 peripheral
+	DEFAULT_SETTINGS = {
+		"Touch Sensor": {
+			mode: "press_in"
+		},
+		"Ultrasonic Sensor": {
+			mode: "enter_threshold",
+			threshold: 12,
+			threshold_units: "inch"
+		},
+		"Color Sensor": {
+			mode: "ambient_exceeds",
+			threshold: 75
+		},
+		"Large Motor": {
+			mode: "on_right",
+			power: "high"
+		},
+		"Medium Motor": {
+			mode: "on_right",
+			power: "high"
+		}
+	};
+
 
 	//////////////////////////////////////////////////////////////////////
 	///////////////////////////// Code Model /////////////////////////////
 	//////////////////////////////////////////////////////////////////////
 
-	// dust
+	var codeModel = {
+		config: {},
+		triggers: {}, // keys are the actual DOM nodes
+
+		process: function () {
+			var model = {
+				config: this.config,
+				triggers: []
+			};
+			for (i in this.triggers) {
+				var trigger = {
+					port: this.triggers[i].port,
+					settings: this.triggers[i].settings,
+					actions: []
+				};
+				for (j in this.triggers[i].actions) {
+					trigger.actions.push({
+						port: this.triggers[i].actions[j].port,
+						settings: this.triggers[i].actions[j].settings
+					});
+				}
+				model.triggers.push(trigger);
+			}
+			return model;
+		},
+		getJSON: function () {
+			return JSON.stringify(this.process());
+		},
+		addEmptyTrigger: function (portID, peripheralName, triggerNode) {
+			this.triggers[triggerNode] = {
+				node: triggerNode,
+				port: portID,
+				peripheral: peripheralName,
+				settings: DEFAULT_SETTINGS[peripheralName],
+				actions: {} // keys are the actual DOM nodes
+			};
+		},
+		addActionToTrigger: function (portID, peripheralName, actionNode, triggerNode) {
+			this.triggers[triggerNode].actions[actionNode] = {
+				node: actionNode,
+				port: portID,
+				peripheral: peripheralName,
+				settings: DEFAULT_SETTINGS[peripheralName]
+			};
+		},
+		removeActionFromTrigger: function (actionNode, triggerNode) {
+			var temp = this.triggers[triggerNode].actions[actionNode];
+			delete this.triggers[triggerNode].actions[actionNode];
+			return temp;
+		},
+		removeTrigger: function (triggerNode) {
+			var temp = this.trigger[triggerNode];
+			delete this.triggers[triggerNode];
+			return temp;
+		},
+		changeTriggerSetting: function (settingName, newValue, triggerNode) {
+			return this.triggers[triggerNode].settings[settingName] = newValue;
+		},
+		changeActionSetting: function (settingName, newValue, actionNode, triggerNode) {
+			return this.triggers[triggerNode].actions[actionNode].settings[settingName] = newValue;
+		}
+	};
+
 
 	//////////////////////////////////////////////////////////////////////
 	///////////////////////// Drag and Drop Data /////////////////////////
@@ -334,9 +419,10 @@
 			portManager.remove(content, port);
 			var nodeList = this.parentNode.parentNode.parentNode.childNodes;
 			for (i = nodeList.length - 1; i >= 0; --i) {
-				portManager.remove(nodeList[i].lastChild.lastChild); // inelegant; TODO remove
+				portManager.remove(nodeList[i].lastChild.lastChild); // inelegant
 			}
-			this.parentNode.parentNode.parentNode.parentNode.removeChild(this.parentNode.parentNode.parentNode);
+			this.parentNode.parentNode.parentNode.parentNode.removeChild(
+				this.parentNode.parentNode.parentNode);
 		});
 		newBlock.appendChild(deleteButton);
 

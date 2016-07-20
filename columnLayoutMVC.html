@@ -5,8 +5,12 @@
 	2016-07-11
 
 	Most recent update
-	2016-07-20
+	2016-07-14
 
+	Next steps:
+	*	Fully convert to MVC structure (in progress; view functionality is all here already though)
+		Demonstrate functionality and technology with a video
+		Try out alternate layouts
 -->
 
 <!DOCType html>
@@ -205,11 +209,78 @@
 		}
 	};
 
+
+	//////////////////////////////////////////////////////////////////////
+	///////////////////////////// Code Model /////////////////////////////
+	//////////////////////////////////////////////////////////////////////
+
+	var codeModel = {
+		config: {},
+		triggers: {}, // keys are the actual DOM nodes
+
+		process: function () {
+			var model = {
+				config: this.config,
+				triggers: []
+			};
+			for (i in this.triggers) {
+				var trigger = {
+					port: this.triggers[i].port,
+					settings: this.triggers[i].settings,
+					actions: []
+				};
+				for (j in this.triggers[i].actions) {
+					trigger.actions.push({
+						port: this.triggers[i].actions[j].port,
+						settings: this.triggers[i].actions[j].settings
+					});
+				}
+				model.triggers.push(trigger);
+			}
+			return model;
+		},
+		getJSON: function () {
+			return JSON.stringify(this.process());
+		},
+		addEmptyTrigger: function (portID, triggerNode) {
+			this.triggers[triggerNode] = {
+				node: triggerNode,
+				port: portID,
+				settings: DEFAULT_SETTINGS[this.config[portID]],
+				actions: {} // keys are the actual DOM nodes
+			};
+		},
+		addActionToTrigger: function (portID, actionNode, triggerNode) {
+			this.triggers[triggerNode].actions[actionNode] = {
+				node: actionNode,
+				port: portID,
+				settings: DEFAULT_SETTINGS[this.config[portID]]
+			};
+		},
+		removeActionFromTrigger: function (actionNode, triggerNode) {
+			var temp = this.triggers[triggerNode].actions[actionNode];
+			delete this.triggers[triggerNode].actions[actionNode];
+			return temp;
+		},
+		removeTrigger: function (triggerNode) {
+			var temp = this.trigger[triggerNode];
+			delete this.triggers[triggerNode];
+			return temp;
+		},
+		changeTriggerSetting: function (settingName, newValue, triggerNode) {
+			return this.triggers[triggerNode].settings[settingName] = newValue;
+		},
+		changeActionSetting: function (settingName, newValue, actionNode, triggerNode) {
+			return this.triggers[triggerNode].actions[actionNode].settings[settingName] = newValue;
+		}
+	};
+
+
 	//////////////////////////////////////////////////////////////////////
 	///////////////////////// Drag and Drop Data /////////////////////////
 	//////////////////////////////////////////////////////////////////////
 
-	// Global variable -- more browser compatibility than the event.dataTransfer object
+	// dust
 	var dragData = {};
 
 	//////////////////////////////////////////////////////////////////////
@@ -316,6 +387,52 @@
 	inputChannelManager = new ExclusiveListManager(PORTS.input);
 	outputChannelManager = new ExclusiveListManager(PORTS.output);
 
+
+	//////////////////////////////////////////////////////////////////////
+	///////////////////////////// Controller /////////////////////////////
+	//////////////////////////////////////////////////////////////////////
+
+	var controller = {
+		moveAction: function (parentTriggerData, sourceActionData, destinationTriggerData) {
+			// Remove old data from model
+			codeModel.removeActionFromTrigger(sourceActionData.node, parentTriggerData.node);
+			// Remove DOM node
+			removeActionBlock(sourceActionData.node);
+
+			// Add new data to model
+			codeModel.addActionToTrigger(sourceActionData.port, sourceActionData.node, destinationTriggerData.node);
+			// Add new DOM node
+			addActionBlockToTrigger(sourceActionData.node, destinationTriggerData.node);
+		},
+
+		swapTriggers: function (triggerData1, triggerData2) {
+			// Swap in model
+
+			// Swap DOM nodes
+			swapTriggerBlocks(trigger1, trigger2);
+		},
+
+		removeTrigger: function () {
+			// remove from model
+
+			// remove from document
+		},
+
+		addTrigger: function () {
+			// add to model
+
+			// add to document
+		},
+
+		addAction: function () {
+			// add to model
+
+			// add to document
+		}
+
+	};
+	
+
 	//////////////////////////////////////////////////////////////////////
 	////////////////////////// New Block Setup ///////////////////////////
 	//////////////////////////////////////////////////////////////////////
@@ -328,6 +445,7 @@
 	}
 
 	function makeTriggerBlock (port) {
+		console.log(port);
 		var newBlock = createClassedElement("td", "trigger-block");
 		var portLabel = document.createElement("span");
 		portLabel.innerHTML = "Port: ";
@@ -418,6 +536,7 @@
 
 		// make it draggable!
 		newBlock.draggable = true;
+		console.log(port);
 		newBlock.addEventListener("dragstart", function (ev) {
 			ev.stopPropagation();
 			dragData.type = "trigger-block";
@@ -674,6 +793,7 @@
 	function addTrigger(parent, triggerPort) {
 		var group = createClassedElement("table", "group-container");
 		var topRow = document.createElement("tr");
+		console.log(triggerPort);
 		topRow.appendChild(makeTriggerBlock(triggerPort));
 		topRow.appendChild(createClassedElement("td", "invisible right-cell"));
 		group.appendChild(topRow);
