@@ -1,53 +1,53 @@
 {
-	device1: {
-		config: {
-			in1: "touch_sensor",
-			in2: "touch_sensor",
-			outA: "large_motor"
+	"device1": {
+		"config": {
+			"in1": "touch_sensor",
+			"in2": "touch_sensor",
+			"outA": "large_motor"
 		},
-		pairs: [
+		"groups": [
 			{ 
-				trigger: {
-					type: "touch_sensor",
-					port: "in1",
-					press_state: "release"
+				"trigger": {
+					"type": "touch_sensor",
+					"port": "in1",
+					"press_state": "release"
 				},
-				actions: [
+				"actions": [
 					{
-						type: "large_motor",
-						port: "outA",
-						mode: "on_right",
-						level: "medium"
+						"type": "large_motor",
+						"port": "outA",
+						"mode": "on_right",
+						"level": "medium"
 					},
 				]
 			},
 			{
-				trigger: {
-					type: "touch_sensor",
-					port: "in1",
-					press_state: "press"
-				}
-				actions: [
+				"trigger": {
+					"type": "touch_sensor",
+					"port": "in1",
+					"press_state": "press"
+				},
+				"actions": [
 					{
-						type: "large_motor",
-						port: "outA",
-						mode: "on_left",
-						level: "low"
+						"type": "large_motor",
+						"port": "outA",
+						"mode": "on_left",
+						"level": "low"
 					}
 				]
 			},
 			{
-				trigger: {
-					type: "touch_sensor",
-					port: "in2",
-					press_state: "press"
-				}
-				actions: [
+				"trigger": {
+					"type": "touch_sensor",
+					"port": "in2",
+					"press_state": "press"
+				},
+				"actions": [
 					{
-						type: "large_motor",
-						port: "outA"
-						mode: "off",
-						level: "coast"
+						"type": "large_motor",
+						"port": "outA",
+						"mode": "off",
+						"stop_type": "coast"
 					}
 				]
 			}
