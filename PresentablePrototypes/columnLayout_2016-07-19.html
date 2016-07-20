@@ -342,7 +342,7 @@
 			portManager.remove(content, port);
 			var nodeList = this.parentNode.parentNode.parentNode.childNodes;
 			for (i = nodeList.length - 1; i >= 0; --i) {
-				portManager.remove(nodeList[i].lastChild.lastChild); // inelegant
+				portManager.remove(nodeList[i].lastChild.lastChild);
 			}
 			this.parentNode.parentNode.parentNode.parentNode.removeChild(
 				this.parentNode.parentNode.parentNode);
@@ -716,7 +716,6 @@
 	<div class="center-column code-area" id="code-area"></div>
 
 	<script>
-	// TODO move
 	var draggingOver = false;
 
 	document.getElementById("code-area").addEventListener("drop", function (ev) {
