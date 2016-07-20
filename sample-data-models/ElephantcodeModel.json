@@ -1,138 +1,138 @@
 {
-	device1: {
-		config: {
-			in1: "touch_sensor",
-			in4: "color_sensor",
-			outA: "large_motor",
-			outB: "large_motor",
-			outD: "medium_motor"
+	"device1": {
+		"config": {
+			"in1": "touch_sensor",
+			"in4": "color_sensor",
+			"outA": "large_motor",
+			"outB": "large_motor",
+			"outD": "medium_motor"
 		},
-		pairs: [
+		"groups": [
 			{ 
-				trigger: {
-					type: "SYSTEM_START",
+				"trigger": {
+					"peripheral_type": "SYSTEM_START",
 				},
-				actions: [
+				"actions": [
 					{
-						type: "large_motor",
-						port: "outB",
-						mode: "ENCODER_RESET"
+						"peripheral_type": "large_motor",
+						"port": "outB",
+						"mode": "ENCODER_RESET"
 					},
 					{
-						type: "medium_motor",
-						port: "outD",
-						mode: "ENCODER_RESET"
+						"peripheral_type": "medium_motor",
+						"port": "outD",
+						"mode": "ENCODER_RESET"
 					}
 				]
 			},
 			{
-				trigger: {
-					type: "brick_dpad_up",
-					press_state: "press"
-				}
-				actions: [
+				"trigger": {
+					"peripheral_type": "brick_dpad_up",
+					"press_state": "press"
+				},
+				"actions": [
 					{
-						type: "large_motor",
-						port: "outA",
-						mode: "on_left",
-						level: "high"
+						"peripheral_type": "large_motor",
+						"port": "outA",
+						"mode": "on_left",
+						"level": "high"
 					}
 				]
 			},
 			{
-				trigger: {
-					type: "brick_dpad_down",
-					press_state: "press"
-				}
-				actions: [
+				"trigger": {
+					"peripheral_type": "brick_dpad_down",
+					"press_state": "press"
+				},
+				"actions": [
 					{
-						type: "large_motor",
-						port: "outA",
-						mode: "on_right",
-						level: "high"
+						"peripheral_type": "large_motor",
+						"port": "outA",
+						"mode": "on_right",
+						"level": "high"
 					}
 				]
 			},
 			{
-				trigger: {
-					type: "brick_dpad_enter",
-					press_state: "press"
-				}
-				actions: [
+				"trigger": {
+					"peripheral_type": "brick_dpad_enter",
+					"press_state": "press"
+				},
+				"actions": [
 					{
-						type: "large_motor",
-						port: "outA",
-						mode: "off",
-						level: "brake"
+						"peripheral_type": "large_motor",
+						"port": "outA",
+						"mode": "off",
+						"stop_type": "brake"
 					}
 				]
 			},
 			{
-				trigger: {
-					type: "brick_dpad_left",
-					press_state: "press"
-				}
-				actions: [
+				"trigger": {
+					"peripheral_type": "brick_dpad_left",
+					"press_state": "press"
+				},
+				"actions": [
 					{
-						type: "large_motor",
-						port: "outB",
-						mode: "on_left",
-						level: "medium"
+						"peripheral_type": "large_motor",
+						"port": "outB",
+						"mode": "on_left",
+						"level": "medium"
 					}
 				]
 			},
 			{
-				trigger: {
-					type: "touch_sensor",
-					port: "in1",
-					press_state: "press"
-				}
-				actions: [
+				"trigger": {
+					"peripheral_type": "touch_sensor",
+					"port": "in1",
+					"press_state": "press"
+				},
+				"actions": [
 					{
-						type: "large_motor",
-						port: "outB",
-						mode: "off",
-						level: "coast"
+						"peripheral_type": "large_motor",
+						"port": "outB",
+						"mode": "off",
+						"stop_type": "coast"
 					},
 					{
-						type: "medium_motor",
-						port: "outD",
-						mode: "on_right",
-						level: "medium"
+						"peripheral_type": "medium_motor",
+						"port": "outD",
+						"mode": "on_right",
+						"level": "medium"
 					}
 				]
 			},
 			{
-				trigger: {
-					type: "color_sensor",
-					port: "in4",
-					mode: "rgb_color"
-					color: "red"
-					rgb_threshold: "190"
-				}
-				actions: [
+				"trigger": {
+					"peripheral_type": "color_sensor",
+					"port": "in4",
+					"mode": "rgb_color",
+					"color": "red",
+					"rgb_threshold": "190"
+				},
+				"actions": [
 					{
-						type: "play_sound",
-						mode: "play_from_file",
-						file_name: "Elephant_call.rsf"
+						"peripheral_type": "play_sound",
+						"mode": "play_from_file",
+						"file_name": "Elephant_call.rsf"
 					},
 					{
-						type: "large_motor",
-						port: "outB",
-						mode: "rotate_x_degrees"
-						output_setting: "on_power",
-						position_change: "770",
-						output_level: "90",
-						encoder_delay: "100"
+						"peripheral_type": "large_motor",
+						"port": "outB",
+						"mode": "rotate_x_degrees",
+						"output_setting": "on_power",
+						"position_change": "770",
+						"output_level": "90",
+						"encoder_delay": "100"
 					},
 					{
-						type: "medium_motor",
-						port: "outD",
-						mode: "rotate_x_degrees",
-						output_setting: "on_power",
-						position_change: "-975",
-						output_level: "-40",
-						encoder_delay: "100"
+						"peripheral_type": "medium_motor",
+						"port": "outD",
+						"mode": "rotate_x_degrees",
+						"output_setting": "on_power",
+						"position_change": "-975",
+						"output_level": "-40",
+						"encoder_delay": "100"
 					}
 				]
 			}
