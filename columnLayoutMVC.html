@@ -326,43 +326,43 @@
 	//////////////////////////////////////////////////////////////////////
 
 	var interfaceController = {
-		/**
-		 * type should be 'input' or 'output'
-		 */
-		addChannel: function (addButton, type) {
-			// Get a free port and peripheral
-			var portID = interfaceModel.getFreePort(type);
-			var peripheralID = DEFAULT_PERIPHERAL[type];
+		// /**
+		//  * type should be 'input' or 'output'
+		//  */
+		// addChannel: function (addButton, type) {
+		// 	// Get a free port and peripheral
+		// 	var portID = interfaceModel.getFreePort(type);
+		// 	var peripheralID = DEFAULT_PERIPHERAL[type];
 
-			// Add channel to the model
-			interfaceModel.updateChannel(portID, peripheralName);
-			// Add channel block to the view with this port and peripheral
-			// var newChannelBlock = /* */;
+		// 	// Add channel to the model
+		// 	interfaceModel.updateChannel(portID, peripheralName);
+		// 	// Add channel block to the view with this port and peripheral
+		// 	// var newChannelBlock = /* */;
 
-			// Update all channel blocks' port lists
-			var portLists = document.getElementsByClassName("portList");
-			for (i in portLists) {
-				// Claim the port
-			}
-		},
-		updateChannel: function (portID, peripheralName) {
-			// Save old value from model
-			var oldPeripheralName = interfaceModel.getChannelType(portID);
-			// Update data in model
-			interfaceModel.updateChannel(portID, peripheralName);
-			// Change channel block in the view
+		// 	// Update all channel blocks' port lists
+		// 	var portLists = document.getElementsByClassName("portList");
+		// 	for (i in portLists) {
+		// 		// Claim the port
+		// 	}
+		// },
+		// updateChannel: function (portID, peripheralName) {
+		// 	// Save old value from model
+		// 	var oldPeripheralName = interfaceModel.getChannelType(portID);
+		// 	// Update data in model
+		// 	interfaceModel.updateChannel(portID, peripheralName);
+		// 	// Change channel block in the view
 
-			// update all channel blocks' port lists
-		},
-		removeChannel: function (portID) {
-			// Save old value from model
-			var oldPeripheralName = interfaceModel.getChannelType(portID);
-			// Update model data
-			interfaceModel.removeChannel(portID);
-			// Remove channel block in view
+		// 	// update all channel blocks' port lists
+		// },
+		// removeChannel: function (portID) {
+		// 	// Save old value from model
+		// 	var oldPeripheralName = interfaceModel.getChannelType(portID);
+		// 	// Update model data
+		// 	interfaceModel.removeChannel(portID);
+		// 	// Remove channel block in view
 
-			// update all channel blocks' port lists
-		},
+		// 	// update all channel blocks' port lists
+		// },
 		// moveAction: function (parentTriggerData, sourceActionData, destinationTriggerData) {
 		// 	// Remove old data from model
 		// 	// Remove DOM node
