@@ -20,7 +20,7 @@
 	<title>Layout concept</title>
 	<style>
 	* {
-		margin: 0px;
+		margin: 0;
 	}
 	html, body {
 		height: 100%;
@@ -122,6 +122,7 @@
 		margin: 10px auto; /* centers horizontally */
 		min-height: 100px;
 		pointer-events: none;
+		border-spacing: 0;
 	}
 	/* Delete Button */
 	.delete-button {
@@ -186,7 +187,7 @@
 	var MOTORS = ["Large Motor", "Medium Motor"];
 
 	// Default settings for every EV3 peripheral
-	DEFAULT_SETTINGS = {
+	var DEFAULT_SETTINGS = {
 		"Touch Sensor": {
 			mode: "press_in"
 		},
@@ -209,14 +210,32 @@
 		}
 	};
 
+	var PERIPHERAL_COLORS = {
+		"Touch Sensor": "forestgreen",
+		"Ultrasonic Sensor": "lavender",
+		"Color Sensor": "cyan",
+		"Large Motor": "crimson",
+		"Medium Motor": "orange"
+	};
+
+	var DEFAULT_PERIPHERAL = {
+		"input": "Touch Sensor",
+		"output": "Large Motor"
+	}
+
 
 	//////////////////////////////////////////////////////////////////////
 	///////////////////////////// Code Model /////////////////////////////
 	//////////////////////////////////////////////////////////////////////
 
-	var codeModel = {
+	/**
+	 * The "M" in "MVC"
+	 * Stores and manipulates the underlying structure of the interface.
+	 * Can create a code model as JSON (use interfaceModel.getJSON).
+	 */
+	var interfaceModel = {
 		config: {},
-		triggers: {}, // keys are the actual DOM nodes
+		triggers: {}, // keys are the actual DOM nodes; this should be changed at a later date
 
 		process: function () {
 			var model = {
@@ -241,6 +260,17 @@
 		},
 		getJSON: function () {
 			return JSON.stringify(this.process());
+		},
+		updateChannel: function (portID, peripheralName) {
+			// also creates
+			this.config[portID] = peripheralName;
+		},
+		getChannelType: function (portID) {
+			return this.config[portID];
+		},
+		removeChannel: function (portID) {
+			// Doesn't actually "remove" the channel, since other clocks may still use it
+			this.config[portID] = undefined;
 		},
 		addEmptyTrigger: function (portID, triggerNode) {
 			this.triggers[triggerNode] = {
@@ -272,9 +302,102 @@
 		},
 		changeActionSetting: function (settingName, newValue, actionNode, triggerNode) {
 			return this.triggers[triggerNode].actions[actionNode].settings[settingName] = newValue;
+		},
+		getTriggerData: function (triggerNode) {
+			return this.triggers[triggerNode];
+		},
+		getActionData: function (actionNode, triggerNode) {
+			return this.triggers[triggerNode].actions[actionNode];
+		},
+		getFreePort: function (type) {
+			for (i in PORTS[type]) {
+				if (PORTS[type][i] === undefined) {
+					return i;
+				}
+			}
+			// No free port found
+			return undefined;
 		}
 	};
 
+
+	//////////////////////////////////////////////////////////////////////
+	///////////////////////////// Controller /////////////////////////////
+	//////////////////////////////////////////////////////////////////////
+
+	var interfaceController = {
+		/**
+		 * type should be 'input' or 'output'
+		 */
+		addChannel: function (addButton, type) {
+			// Get a free port and peripheral
+			var portID = interfaceModel.getFreePort(type);
+			var peripheralID = DEFAULT_PERIPHERAL[type];
+
+			// Add channel to the model
+			interfaceModel.updateChannel(portID, peripheralName);
+			// Add channel block to the view with this port and peripheral
+			// var newChannelBlock = /* */;
+
+			// Update all channel blocks' port lists
+			var portLists = document.getElementsByClassName("portList");
+			for (i in portLists) {
+				// Claim the port
+			}
+		},
+		updateChannel: function (portID, peripheralName) {
+			// Save old value from model
+			var oldPeripheralName = interfaceModel.getChannelType(portID);
+			// Update data in model
+			interfaceModel.updateChannel(portID, peripheralName);
+			// Change channel block in the view
+
+			// update all channel blocks' port lists
+		},
+		removeChannel: function (portID) {
+			// Save old value from model
+			var oldPeripheralName = interfaceModel.getChannelType(portID);
+			// Update model data
+			interfaceModel.removeChannel(portID);
+			// Remove channel block in view
+
+			// update all channel blocks' port lists
+		},
+		// moveAction: function (parentTriggerData, sourceActionData, destinationTriggerData) {
+		// 	// Remove old data from model
+		// 	// Remove DOM node
+
+		// 	// Add new data to model
+		// 	// Add new DOM node
+		// },
+
+		// swapTriggers: function (triggerData1, triggerData2) {
+		// 	// Swap in model
+
+		// 	// Swap DOM nodes
+		// 	swapTriggerBlocks(trigger1, trigger2);
+		// },
+
+		// removeTrigger: function () {
+		// 	// remove from model
+
+		// 	// remove from document
+		// },
+
+		// addTrigger: function () {
+		// 	// add to model
+
+		// 	// add to document
+		// },
+
+		// addAction: function () {
+		// 	// add to model
+
+		// 	// add to document
+		// }
+
+	};
+	
 
 	//////////////////////////////////////////////////////////////////////
 	///////////////////////// Drag and Drop Data /////////////////////////
@@ -389,51 +512,6 @@
 
 
 	//////////////////////////////////////////////////////////////////////
-	///////////////////////////// Controller /////////////////////////////
-	//////////////////////////////////////////////////////////////////////
-
-	var controller = {
-		moveAction: function (parentTriggerData, sourceActionData, destinationTriggerData) {
-			// Remove old data from model
-			codeModel.removeActionFromTrigger(sourceActionData.node, parentTriggerData.node);
-			// Remove DOM node
-			removeActionBlock(sourceActionData.node);
-
-			// Add new data to model
-			codeModel.addActionToTrigger(sourceActionData.port, sourceActionData.node, destinationTriggerData.node);
-			// Add new DOM node
-			addActionBlockToTrigger(sourceActionData.node, destinationTriggerData.node);
-		},
-
-		swapTriggers: function (triggerData1, triggerData2) {
-			// Swap in model
-
-			// Swap DOM nodes
-			swapTriggerBlocks(trigger1, trigger2);
-		},
-
-		removeTrigger: function () {
-			// remove from model
-
-			// remove from document
-		},
-
-		addTrigger: function () {
-			// add to model
-
-			// add to document
-		},
-
-		addAction: function () {
-			// add to model
-
-			// add to document
-		}
-
-	};
-	
-
-	//////////////////////////////////////////////////////////////////////
 	////////////////////////// New Block Setup ///////////////////////////
 	//////////////////////////////////////////////////////////////////////
 
@@ -445,7 +523,6 @@
 	}
 
 	function makeTriggerBlock (port) {
-		console.log(port);
 		var newBlock = createClassedElement("td", "trigger-block");
 		var portLabel = document.createElement("span");
 		portLabel.innerHTML = "Port: ";
@@ -536,7 +613,6 @@
 
 		// make it draggable!
 		newBlock.draggable = true;
-		console.log(port);
 		newBlock.addEventListener("dragstart", function (ev) {
 			ev.stopPropagation();
 			dragData.type = "trigger-block";
@@ -698,6 +774,8 @@
 	/////////////////// Insertion and Removal of Nodes ///////////////////
 	//////////////////////////////////////////////////////////////////////
 
+	// These functions are meant to be used to modify the "view" in MVC
+
 	// Can also be used to remove dashed outlined blocks
 	function removeActionBlock (action) {
 		if (action.parentNode.nextSibling) {
@@ -793,7 +871,6 @@
 	function addTrigger(parent, triggerPort) {
 		var group = createClassedElement("table", "group-container");
 		var topRow = document.createElement("tr");
-		console.log(triggerPort);
 		topRow.appendChild(makeTriggerBlock(triggerPort));
 		topRow.appendChild(createClassedElement("td", "invisible right-cell"));
 		group.appendChild(topRow);

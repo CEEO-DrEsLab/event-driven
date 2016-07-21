@@ -1,0 +1,104 @@
+<!--
+	Test Interface 2
+	By: Benjamin Zackin
+	Last Modified: 7/11/2016
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Test Interface 2</title>
+	<style> 
+		* {
+			margin: 0px;
+		}
+		table, th, td {
+			border: 1px solid black;
+		}
+		table {
+			border-collapse: collapse;
+		}
+		th {
+			border-bottom: 0px none;
+		}
+		td {
+			border-top: 0px none;
+			border-bottom: 1px solid black;
+		}
+		#codeBlock {
+			border: 1px dashed black;
+			padding:50px;
+			width: 200px;
+			margin: 10px;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="header">
+		<h1>Interface Trial</h1>
+	</div>
+
+	<div id="nav">
+		<button>New</button>
+		<button>Open</button>
+		<button>Save</button>
+		<button>Print</button>
+		<button>Deploy</button>
+		<button>Run</button>
+		<button>Stop</button>
+	</div>
+
+	<div>
+		<table>
+			<caption>PORT VIEW</caption>
+			<tr>
+				<th>Port 1 </th>
+				<th>Port 2</th>
+				<th>Port 3</th>
+				<th>Port 4</th>
+			</tr>
+			<tr>
+				<td>NONE</td>
+				<td>NONE</td>
+				<td>NONE</td>
+				<td>NONE</td>
+			</tr>
+			<tr>
+				<th>Port A</th>
+				<th>Port B</th>
+				<th>Port C</th>
+				<th>Port D</th>
+			</tr>
+			<tr>
+				<td>NONE</td>
+				<td>NONE</td>
+				<td>NONE</td>
+				<td>NONE</td>
+			</tr>
+		</table>
+
+	</div>
+
+	<div id="codeScreen">
+		<div id="codeBlock"></div>
+	</div>
+
+	<div>
+		<button onclick="addCodeBlock()">Add New Code Block</button>
+	</div>
+	
+
+	<script>
+		function addCodeBlock() {
+			var lastBlock = document.getElementById("codeBlock");
+			var codeScreen = document.getElementById("codeScreen");
+			var newBlock = lastBlock.cloneNode(true);
+			codeScreen.appendChild(newBlock);
+			delete lastBlock;
+			return;
+		} 
+	</script>
+</body>
+</html>

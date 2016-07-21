@@ -1,0 +1,65 @@
+{
+	"channels": {
+		<channelID>: {
+			"type": "builtin",
+			"displayName": <displayName>,
+			"allow": ["input"]
+		},
+		<channelID>: {
+			"type": "sensor",
+			"displayName": <displayName>,
+			"allow": ["input"],
+			"peripheral": <peripheralID>
+		},
+		<channelID>: {
+			"type": "sensor",
+			"displayName": <displayName>,
+			"allow": ["input", "output"],
+			"peripheral": <peripheralID>
+		},
+		<channelID>: {
+			"type": "motor",
+			"displayName": <displayName>,
+			"allow": ["input", "output"],
+			"peripheral": <peripheralID>
+		}
+		<channelID>: {
+			"type": "network",
+			"displayName": <displayName>,
+			"allow": ["output"],
+			"url": <URL>
+		}
+	},
+	"triggers": [
+		{
+			"channel": <channelID>,
+			"settings": {
+				<settingName>: <settingValue>
+			},
+			"actions": [
+				{
+					"channel": <channelID>,
+					"settings": {}
+				},
+				{
+					"channel": <channelID>,
+					"settings": {}
+				}
+			]
+		},
+		{
+			"channel": <channelID>,
+			"settings": {},
+			"actions": [
+				{
+					"channel": <channelID>,
+					"settings": {}
+				},
+				{
+					"channel": <channelID>,
+					"settings": {}
+				}
+			]
+		}
+	]
+}
