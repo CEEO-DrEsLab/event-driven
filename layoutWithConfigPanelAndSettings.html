@@ -1,0 +1,276 @@
+<!--
+	Made by Caleb Lucas-Foley
+	2016-07-25
+
+	TODO: angularJS!
+-->
+
+<!doctype HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Static Layout</title>
+	<style>
+	* {
+		margin: 0;
+	}
+	html, body {
+		height: 100%;
+	}
+	#port-config {
+		margin: auto;
+		border-spacing: 0;
+	}
+	.port-config-cell {
+		width: 175px;
+		height: 75px;
+		text-align: center;
+		vertical-align: top;
+		background-color: gray;
+		border: 2px inset;
+	}
+	#code-area {
+		text-align: center;
+	}
+	/* Code blocks */
+	.group-container {
+		border-spacing: 0;
+		margin: 10px auto;
+	}
+	.group-container td {
+		width: 200px;
+		height: 100px;
+		vertical-align: top;
+		border: 2px outset;
+	}
+	.trigger-cell {
+		background-color: gray;
+	}
+	.action-cell {
+		background-color: gray;
+	}
+	.invisible {
+		visibility: hidden;
+	}
+	</style>
+	<!-- Get AngularJS from Google CDN -->
+	<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+</head>
+
+<body ng-app="myApp" ng-controller="myCtrl" background="http://ths.sps.lane.edu/biomes/Backgrounds/bluetrip.gif">
+	<table id="port-config">
+		<tr>
+			<td ng-repeat="x in inputPorts" class="port-config-cell" ng-style="{background:colorsByPeripheral[portConfig[x]]}">
+				{{x}}<br/>
+				<select ng-model="portConfig[x]" ng-options="y for y in sensors"></select>
+			</td>
+		</tr>
+		<tr>
+			<td ng-repeat="x in outputPorts" class="port-config-cell" ng-style="{background:colorsByPeripheral[portConfig[x]]}">
+				{{x}}<br/>
+				<select ng-model="portConfig[x]" ng-options="y for y in motors"></select>
+			</td>
+		</tr>
+	</table>
+	<div id="code-area">
+		<button ng-click="getJSON()">Get Code</button>
+
+		<table ng-repeat="trigger in triggers" class="group-container">
+			<tr>
+				<td class="trigger-cell" rowspan="9999" ng-style="{background:colorsByPeripheral[portConfig[trigger.port]]}">
+					Port {{trigger.port}} {{portConfig[trigger.port]}}<br/>
+					Mode: <select ng-model="trigger.mode" ng-options="mode as mode for (mode, options) in peripheralInputModes[portConfig[trigger.port]]"></select>
+					Settings:
+					<span ng-repeat="(setting, details) in peripheralInputModes[portConfig[trigger.port]][trigger.mode]">
+						<!-- selectable lists -->
+						<select ng-if="details.type === 'dropdown'" ng-model="trigger.settings[setting]" ng-options="option for option in details.options"></select>
+						<!-- numerical input -->
+						<input ng-if="details.type === 'number'" ng-model="trigger.settings[setting]" type="number"></input>
+					</span>
+				</td>
+				<td ng-if="trigger.actions.length === 0" class="invisible action-cell">EMPTY CELL</td>
+			</tr>
+			<tr ng-if="trigger.actions.length > 0" ng-repeat="action in trigger.actions" class="action-cell" ng-style="{background:colorsByPeripheral[portConfig[action.port]]}">
+				<td>
+					Port {{action.port}} {{portConfig[action.port]}}<br/>
+					Mode: <select ng-model="action.mode" ng-options="mode as mode for (mode, options) in peripheralOutputModes[portConfig[action.port]]"></select>
+					Settings:
+					<span ng-repeat="(setting, details) in peripheralOutputModes[portConfig[action.port]][action.mode]">
+						<!-- selectable lists -->
+						<select ng-if="details.type === 'dropdown'" ng-model="action.settings[setting]" ng-options="option for option in details.options"></select>
+						<!-- numerical input -->
+						<input ng-if="details.type === 'number'" ng-model="action.settings[setting]" type="number"></input>
+					</span>
+				</td>
+			</tr>
+		</table>
+	</div>
+
+	<script>
+	var app = angular.module('myApp', []);
+	app.controller('myCtrl', function($scope) {
+		// Port Configuration Panel
+		$scope.portConfig = {
+			'1': "Touch Sensor",
+			'2': "Touch Sensor",
+			// '3': "None",
+			// '4': "None",
+			'A': "Large Motor",
+			// 'B': "None",
+			// 'C': "None",
+			// 'D': "None"
+		};
+		$scope.inputPorts = [
+			"1", "2", "3", "4"
+		];
+		$scope.outputPorts = [
+			"A", "B", "C", "D"
+		];
+		$scope.sensors = [
+			"Touch Sensor", "Color Sensor", "Gyro Sensor", "Ultrasonic Sensor", undefined
+		];
+		$scope.motors = [
+			"Large Motor", "Medium Motor", undefined
+		];
+
+		// Code Model
+		$scope.triggers = [
+			{
+				port: "1",
+				mode: "press_in",
+				settings: {},
+				actions: [
+					{
+						port: "A",
+						mode: "start_fwd",
+						settings: {
+							power: "high"
+						}
+					}
+				]
+			},
+			{
+				port: "1",
+				mode: "release",
+				settings: {},
+				actions: [
+					{
+						port: "A",
+						mode: "start_bkwd",
+						settings: {
+							power: "medium"
+						}
+					}
+				]
+			},
+			{
+				port: "2",
+				mode: "press_in",
+				settings: {},
+				actions: [
+					{
+						port: "A",
+						mode: "stop",
+						settings: {
+							stopType: "coast"
+						}
+					}
+				]
+			}
+		];
+
+		// Settings options, sorted by peripheral and mode
+		$scope.peripheralInputModes = {
+			"Touch Sensor": {
+				"press_in": {},
+				"release": {},
+				"count_exceeds": {
+					threshold: {
+						type: "number"
+					}
+				}
+			},
+			"Ultrasonic Sensor": {
+				"enter_range": {
+					threshold: {
+						type: "number"
+					},
+					units: {
+						type: "dropdown",
+						options: ["inches", "centimeters", "klicks"]
+					}
+				},
+				"exit_range": {
+					threshold: {
+						type: "number"
+					},
+					units: {
+						type: "dropdown",
+						options: ["inches", "centimeters", "klicks"]
+					}
+				}
+			}
+		};
+
+		$scope.peripheralOutputModes = {
+			"Large Motor": {
+				"start_fwd": {
+					power: {
+						type: "dropdown",
+						options: ["high", "medium", "low"]
+					}
+				},
+				"start_bkwd": {
+					power: {
+						type: "dropdown",
+						options: ["high", "medium", "low"]
+					}
+				},
+				"stop": {
+					stopType: {
+						type: "dropdown",
+						options: ["coast", "brake"]
+					}
+				}
+			},
+			"Medium Motor": {
+				"start_fwd": {
+					power: {
+						type: "dropdown",
+						options: ["high", "medium", "low"]
+					}
+				},
+				"start_bkwd": {
+					power: {
+						type: "dropdown",
+						options: ["high", "medium", "low"]
+					}
+				},
+				"stop": {
+					stopType: {
+						type: "dropdown",
+						options: ["coast", "brake"]
+					}
+				}
+			},
+		};
+
+		$scope.colorsByPeripheral = {
+			"Touch Sensor": "forestgreen",
+			"Ultrasonic Sensor": "darkviolet",
+			"Gyro Sensor": "magenta",
+			"Color Sensor": "turquoise",
+			"Large Motor": "crimson",
+			"Medium Motor": "orangered"
+		};
+
+		$scope.getJSON = function () {
+			alert(angular.toJson({
+				portConfig: $scope.portConfig,
+				triggers: $scope.triggers
+			}));
+		}
+
+	});
+	</script>
+</body>
