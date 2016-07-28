@@ -1,0 +1,155 @@
+<!--
+	Title: Send Test v7
+	By: Benjamin Zackin
+	Last Modified: 7/27/2016
+	Notes: Sends HTTP POST request to Juliana's EV3 (IP 130.64.189.185:5000, Port 5000)
+		via JQuery and AJAX using CORS from a MAMP server hosted on Ben's laptop, IP 130.64.94.22 port 8888.
+		>>>>IMPLEMENTS SERVER SIDE PARSING OF DATA_MODEL JSONS!!!!!!
+
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Send Test v7</title>
+
+	<style>
+		#data {
+			height:300px;
+			width:800px;
+		}
+		#submit_button {
+			height:25px;
+			width:120px;
+		}
+		#destination {
+			height:25px;
+			width:210px;
+		}
+		#send_col {
+			height:220px;
+			display:inline-block;
+		}
+		#response_col {
+			height:220px;
+			display:inline-block;
+		}
+		#send_title {
+			height:20px;
+		}
+		#response_title {
+			height:20px;
+		}
+		#send_log {
+			height:200px;
+			width:200px;
+			background-color:black;
+			color:lightgreen;
+
+		}
+		#response_log {
+			height:200px;
+			width:200px;
+			background-color:black;
+			color:lightgreen;
+		}
+
+	</style>
+
+	<script type="text/javascript"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+	<script src= "data_model_parser3(cors).js"></script>
+	<script>
+	var startTime = 0;
+
+	//set up and send a CORS HTTP POST request
+	function createCORSRequest(method, url) {
+		var xhr = new XMLHttpRequest();
+		if ("withCredentials" in xhr) {
+			// Check if the XMLHttpRequest object has a "withCredentials" property.
+			// "withCredentials" only exists on XMLHTTPRequest2 objects.
+			xhr.open(method, url, true);
+		} else if (typeof XDomainRequest != "undefined") {
+			// Otherwise, check if XDomainRequest.
+			// XDomainRequest only exists in IE, and is IE's way of making CORS requests.
+			xhr = new XDomainRequest();
+			xhr.open(method, url);
+		} else {
+			// Otherwise, CORS is not supported by the browser.
+			xhr = null;
+		}
+		return xhr;
+	}
+
+	// Make the actual CORS request.
+	function makeCorsRequest(url, data, index, isStart) {
+		var xhr = createCORSRequest('POST', url);
+  		if (!xhr) {
+    		alert('CORS not supported');
+    	return;
+  		}
+
+  		function callback(response,dex,starting) {
+			if (starting) {
+				lastValues[trigger_list[dex].port] = response.value;
+			}
+			currentValues[trigger_list[dex].port] = response.value; // this the data we get back (raw sensor data)*/
+			console.log('callback://\t HTTP response: ' + response.value);
+			document.getElementById("response_log").innerHTML = response.value;
+		}
+		// Response handlers.
+		xhr.onload = function() {
+
+			var textToParse = xhr.responseText;
+			var str = textToParse.match(/<title>(.|\n)*?<\/title>/)[0];
+			var text = str.slice(7, str.length - 8);
+			console.log('makeCorsRequest://\tResponse from CORS request to ' + url + ': \n\t' + text);
+
+			var endTime = Date.now();
+			console.log("makeCorsRequest://\tmessage sent in: " + (endTime - startTime) + " msec"); // log elapsed send time
+			
+			callback(text,index,isStart); // fire HTTP response handler function
+		};
+		xhr.onerror = function() {
+			console.log('makeCorsRequest://\tWoops, there was an error making the request.');
+			//var textToParse = xhr.responseText;
+			//var str = textToParse.match(/<title>(.|\n)*?<\/title>/)[0];
+			//var text = str.slice(7, str.length - 8);
+			//console.log('makeCorsRequest://\tResponse from CORS request to ' + url + ': \n\t' + text);
+
+			var endTime = Date.now();
+			console.log("makeCorsRequest://\tmessage sent in: " + (endTime - startTime) + " msec");
+
+			callback(text,index);// fire HTTP response handler function
+
+		};
+		xhr.send(data);
+	}
+
+	
+	</script>
+</head>
+
+<body>
+	<div id="header">
+		<h1>Send Trial 7: Parse Data Model and send via CORS to Juliana's EV3</h1>
+	</div>
+	<h2>Paste set request below</h2>
+	<!--http://130.64.94.159:5000-->
+	<form onsubmit="return false;">
+		<textarea name="value1" id="data" rows="10" cols="30"></textarea>
+		<button id="submit_button" type="button" onclick="parse_data(document.getElementById('data').value)">Send!</button>
+	</form>
+	<div id="send_col">
+		<h4 id="send_title">Send Log</h4>
+		<div id="send_log"></div>
+	</div>
+	<div id="response_col">
+		<h4 id="response_title">Response Log</h4>
+		<div id="response_log"></div>
+	</div>
+	
+</body>
+
+</html>

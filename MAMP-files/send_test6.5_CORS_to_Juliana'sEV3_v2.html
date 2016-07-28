@@ -1,0 +1,154 @@
+<!--
+	Title: Send Test v6.5
+	By: Benjamin Zackin
+	Last Modified: 7/27/2016
+	Notes: Sends HTTP POST request to Juliana's EV3 (IP 130.64.189.185:5000, Port 5000)
+		via JQuery and AJAX using CORS from a MAMP server hosted on Ben's laptop, IP 130.64.94.22 port 8888.
+
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Send Test v6.5</title>
+
+	<style>
+		#data {
+			height:200px;
+			width:800px;
+		}
+		#submit_button {
+			height:25px;
+			width:120px;
+		}
+		#destination {
+			height:25px;
+			width:210px;
+		}
+		#send_col {
+			height:220px;
+			display:inline-block;
+		}
+		#response_col {
+			height:220px;
+			display:inline-block;
+		}
+		#send_title {
+			height:20px;
+		}
+		#response_title {
+			height:20px;
+		}
+		#send_log {
+			height:200px;
+			width:200px;
+			background-color:black;
+			color:lightgreen;
+
+		}
+		#response_log {
+			height:200px;
+			width:200px;
+			background-color:black;
+			color:lightgreen;
+		}
+
+	</style>
+
+	<script type="text/javascript"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+	<script>
+	var startTime = 0;
+
+	function send_setter_stuff(data_model) {
+		var url = "http://130.64.94.159:5000";
+		console.log("send_setter_stuff://\tSending command string " + data_model + " to url: " + url);
+		document.getElementById("send_log").innerHTML = data_model;
+		startTime = Date.now();
+		makeCorsRequest(url,data_model,0,true);
+	}
+	//set up and send a CORS HTTP POST request
+	function createCORSRequest(method, url) {
+
+		var xhr = new XMLHttpRequest();
+		if ("withCredentials" in xhr) {
+			// Check if the XMLHttpRequest object has a "withCredentials" property.
+			// "withCredentials" only exists on XMLHTTPRequest2 objects.
+			xhr.open(method, url, true);
+		} else if (typeof XDomainRequest != "undefined") {
+			// Otherwise, check if XDomainRequest.
+			// XDomainRequest only exists in IE, and is IE's way of making CORS requests.
+			xhr = new XDomainRequest();
+			xhr.open(method, url);
+		} else {
+			// Otherwise, CORS is not supported by the browser.
+			xhr = null;
+		}
+		return xhr;
+	}
+
+	// Make the actual CORS request.
+	function makeCorsRequest(url, data) {
+		var xhr = createCORSRequest('POST', url);
+  		if (!xhr) {
+    		alert('CORS not supported');
+    	return;
+  		}
+  			// manage callbacks from EV3
+  		function callback(response) {
+			json_resp = JSON.parse(response);
+			console.log(json_resp);
+			if (json_resp.value == "Not found") {
+				console.error("Invalid Input, please fix and retry.");
+			}
+			else {
+				document.getElementById("response_log").innerHTML = response;
+				console.log('callback://\tResponse received from CORS HTTP request to ' + url);
+				console.log('callback://\t HTTP response code: ' + json_resp.httpCode);
+				console.log('callback://\t HTTP response value: ' + json_resp.value);
+			}
+		}
+		// Response handlers.
+		xhr.onload = function() {
+			callback(xhr.responseText);
+
+			var endTime = Date.now();
+			console.log("makeCorsRequest://\tmessage sent in: " + (endTime - startTime) + " msec"); // log elapsed send time
+		};
+		xhr.onerror = function() {
+			console.log('makeCorsRequest://\tWoops, there was an error making the request.');
+			var endTime = Date.now();
+			console.log("makeCorsRequest://\tmessage sent in: " + (endTime - startTime) + " msec");
+		};
+		xhr.send(data);
+	}
+
+	
+	</script>
+</head>
+
+<body>
+	<div id="header">
+		<h1>Send Trial 6.5: Ping Juliana's EV3 via AJAX/JQuery using CORS</h1>
+	</div>
+	<h2>Paste set request below</h2>
+	<!--http://130.64.94.159:5000-->
+	<form onsubmit="return false;">
+		<h5>set:large motor:outA:run_forever:75</h5>
+		<h5>get:touch:in1:value:-1</h5>
+		<textarea name="value1" id="data" rows="10" cols="30"></textarea>
+		<button id="submit_button" type="button" onclick="send_setter_stuff(document.getElementById('data').value)">Send!</button>
+	</form>
+	<div id="send_col">
+		<h4 id="send_title">Send Log</h4>
+		<div id="send_log"></div>
+	</div>
+	<div id="response_col">
+		<h4 id="response_title">Response Log</h4>
+		<div id="response_log"></div>
+	</div>
+	
+</body>
+
+</html>
