@@ -1,8 +1,6 @@
 <!--
 	Made by Caleb Lucas-Foley
 	2016-07-25
-
-	TODO: angularJS!
 -->
 
 <!doctype HTML>
@@ -17,17 +15,29 @@
 	html, body {
 		height: 100%;
 	}
+	body {
+		font-family: "Comic Sans MS", cursive, sans-serif;
+		background-image: url("http://ths.sps.lane.edu/biomes/Backgrounds/bluetrip.gif");
+		background-color: navy;
+		color: black;
+		text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+	}
 	#port-config {
 		margin: auto;
 		border-spacing: 0;
 	}
 	.port-config-cell {
 		width: 175px;
-		height: 75px;
+		height: 70px;
 		text-align: center;
 		vertical-align: top;
 		background-color: gray;
-		border: 2px inset;
+		border: 3px gray inset;
+		/*border-radius: 50%;*/
+		border-bottom-right-radius: 50% 20px;
+		border-top-right-radius: 50% 20px;
+		border-bottom-left-radius: 50% 20px;
+		border-top-left-radius: 50% 20px;
 	}
 	#code-area {
 		text-align: center;
@@ -41,65 +51,71 @@
 		width: 200px;
 		height: 100px;
 		vertical-align: top;
-		border: 2px outset;
+		border: 3px outset;
 	}
 	.trigger-cell {
 		background-color: gray;
+		border-bottom-left-radius: 20px 50px;
+		border-top-left-radius: 20px 50px;
 	}
 	.action-cell {
 		background-color: gray;
+		border-bottom-right-radius: 20px 50px;
+		border-top-right-radius: 20px 50px;
 	}
 	.invisible {
 		visibility: hidden;
 	}
 	</style>
 	<!-- Get AngularJS from Google CDN -->
-	<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
 </head>
 
-<body ng-app="myApp" ng-controller="myCtrl" background="http://ths.sps.lane.edu/biomes/Backgrounds/bluetrip.gif">
+<body ng-app="myApp" ng-controller="myCtrl">
 	<table id="port-config">
 		<tr>
-			<td ng-repeat="x in inputPorts" class="port-config-cell" ng-style="{background:colorsByPeripheral[portConfig[x]]}">
+			<td ng-repeat="x in inputPorts" class="port-config-cell" ng-style="{background:channelColors[portConfig[x]],borderColor:channelColors[portConfig[x]]}">
 				{{x}}<br/>
 				<select ng-model="portConfig[x]" ng-options="y for y in sensors"></select>
 			</td>
 		</tr>
 		<tr>
-			<td ng-repeat="x in outputPorts" class="port-config-cell" ng-style="{background:colorsByPeripheral[portConfig[x]]}">
+			<td ng-repeat="x in outputPorts" class="port-config-cell" ng-style="{background:channelColors[portConfig[x]],borderColor:channelColors[portConfig[x]]}">
 				{{x}}<br/>
 				<select ng-model="portConfig[x]" ng-options="y for y in motors"></select>
 			</td>
 		</tr>
 	</table>
 	<div id="code-area">
-		<button ng-click="getJSON()">Get Code</button>
+		<button ng-click="getJSON()">Show Code</button>
+		<button ng-click="loadProgram()">Load Program</button>
 
 		<table ng-repeat="trigger in triggers" class="group-container">
 			<tr>
-				<td class="trigger-cell" rowspan="9999" ng-style="{background:colorsByPeripheral[portConfig[trigger.port]]}">
-					Port {{trigger.port}} {{portConfig[trigger.port]}}<br/>
-					Mode: <select ng-model="trigger.mode" ng-options="mode as mode for (mode, options) in peripheralInputModes[portConfig[trigger.port]]"></select>
+				<td class="trigger-cell" rowspan="9999" ng-style="{background:channelColors[trigger.port ? portConfig[trigger.port] : trigger.channel],borderColor:channelColors[trigger.port ? portConfig[trigger.port] : trigger.channel]}">
+					{{trigger.port ? 'Port ' + trigger.port + ' ' + portConfig[trigger.port] : trigger.channel}}<br/>
+					<select ng-model="trigger.mode" ng-options="mode as mode for (mode, options) in channelModes[trigger.port ? portConfig[trigger.port] : trigger.channel].input"></select>
 					Settings:
-					<span ng-repeat="(setting, details) in peripheralInputModes[portConfig[trigger.port]][trigger.mode]">
-						<!-- selectable lists -->
-						<select ng-if="details.type === 'dropdown'" ng-model="trigger.settings[setting]" ng-options="option for option in details.options"></select>
-						<!-- numerical input -->
+					<span ng-repeat="(setting, details) in channelModes[trigger.port ? portConfig[trigger.port] : trigger.channel].input[trigger.mode]">
+						<select ng-if="details.type === 'selectable'" ng-model="trigger.settings[setting]" ng-options="option for option in details.options"></select>
 						<input ng-if="details.type === 'number'" ng-model="trigger.settings[setting]" type="number"></input>
+						<input ng-if="details.type === 'text'" ng-model="trigger.settings[setting]" type="text" size="15"></input>
 					</span>
 				</td>
 				<td ng-if="trigger.actions.length === 0" class="invisible action-cell">EMPTY CELL</td>
 			</tr>
-			<tr ng-if="trigger.actions.length > 0" ng-repeat="action in trigger.actions" class="action-cell" ng-style="{background:colorsByPeripheral[portConfig[action.port]]}">
-				<td>
-					Port {{action.port}} {{portConfig[action.port]}}<br/>
-					Mode: <select ng-model="action.mode" ng-options="mode as mode for (mode, options) in peripheralOutputModes[portConfig[action.port]]"></select>
+			<tr ng-if="trigger.actions.length > 0" ng-repeat="action in trigger.actions">
+				<td class="action-cell" ng-style="{background:channelColors[action.port ? portConfig[action.port] : action.channel],borderColor:channelColors[action.port ? portConfig[action.port] : action.channel]}">
+					{{action.port ? 'Port ' + action.port + ' ' + portConfig[action.port] : action.channel}}<br/>
+					<select ng-model="action.mode" ng-options="mode as mode for (mode, options) in channelModes[action.port ? portConfig[action.port] : action.channel].output"></select>
 					Settings:
-					<span ng-repeat="(setting, details) in peripheralOutputModes[portConfig[action.port]][action.mode]">
+					<span ng-repeat="(setting, details) in channelModes[action.port ? portConfig[action.port] : action.channel].output[action.mode]">
 						<!-- selectable lists -->
-						<select ng-if="details.type === 'dropdown'" ng-model="action.settings[setting]" ng-options="option for option in details.options"></select>
+						<select ng-if="details.type === 'selectable'" ng-model="action.settings[setting]" ng-options="option for option in details.options"></select>
 						<!-- numerical input -->
 						<input ng-if="details.type === 'number'" ng-model="action.settings[setting]" type="number"></input>
+						<!-- text -->
+						<input ng-if="details.type === 'text'" ng-model="action.settings[setting]" type="text" size="15"></input>
 					</span>
 				</td>
 			</tr>
@@ -109,17 +125,226 @@
 	<script>
 	var app = angular.module('myApp', []);
 	app.controller('myCtrl', function($scope) {
-		// Port Configuration Panel
+		// Port Configuration Panel Dats
+		// Set by blocks in port config panel
+		// Accessed by code blocks which refer to ports but don't know the peripherals
+		// Heavily EV3-specifc
 		$scope.portConfig = {
 			'1': "Touch Sensor",
-			'2': "Touch Sensor",
+			// '2': "None",
 			// '3': "None",
-			// '4': "None",
+			'4': "Color Sensor",
 			'A': "Large Motor",
-			// 'B': "None",
+			'B': "Large Motor",
 			// 'C': "None",
-			// 'D': "None"
+			'D': "Medium Motor"
 		};
+
+		// Code Model
+		// Stores the actual trigger-action WHEN-THEN pairs
+		// Currently hard-coded; everything can be changed but the specific channels/ports
+		// The code that is here now is the elephant demo code, which is untested in this form
+		$scope.triggers = [
+			{
+				channel: "Program",
+				mode: "program_start",
+				actions: [
+					{
+						port: "B",
+						mode: "reset_encoders"
+					},
+					{
+						port: "D",
+						mode: "reset_encoders"
+					}
+				]
+			},
+			{
+				channel: "Brick Button",
+				mode: "press_in",
+				settings: {
+					button: "button_up"
+				},
+				actions: [
+					{
+						port: "A",
+						mode: "start_fwd",
+						settings: {
+							power: "high"
+						}
+					}
+				]
+			},
+			{
+				channel: "Brick Button",
+				mode: "press_in",
+				settings: {
+					button: "button_down"
+				},
+				actions: [
+					{
+						port: "A",
+						mode: "start_bkwd",
+						settings: {
+							power: "high"
+						}
+					}
+				]
+			},
+			{
+				channel: "Brick Button",
+				mode: "press_in",
+				settings: {
+					button: "button_center"
+				},
+				actions: [
+					{
+						port: "A",
+						mode: "stop",
+						settings: {
+							stopType: "brake"
+						}
+					}
+				]
+			},
+			{
+				channel: "Brick Button",
+				mode: "press_in",
+				settings: {
+					button: "button_left"
+				},
+				actions: [
+					{
+						port: "B",
+						mode: "start_fwd",
+						settings: {
+							power: "medium"
+						}
+					}
+				]
+			},
+			{
+				port: "1",
+				mode: "press_in",
+				actions: [
+					{
+						port: "B",
+						mode: "stop",
+						settings: {
+							stopType: "coast"
+						}
+					},
+					{
+						port: "D",
+						mode: "start_bkwd",
+						settings: {
+							power: "medium"
+						}
+					}
+				]
+			},
+			{
+				port: "4",
+				mode: "rgb_value_passes",
+				settings: {
+					color: "red",
+					threshold: 190,
+					comparisonType: ">"
+				},
+				actions: [
+					{
+						channel: "Brick Sound",
+						mode: "play_file",
+						settings: {
+							filename: "elephant_call.rsf",
+							volume: 100
+						}
+					},
+					{
+						port: "B",
+						mode: "start_fwd",
+						settings: {
+							power: "high"
+						}
+					},
+					{
+						port: "D",
+						mode: "start_bkwd",
+						settings: {
+							power: "medium"
+						}
+					},
+					{
+						port: "B",
+						mode: "reset_encoders"
+					},
+					{
+						port: "D",
+						mode: "reset_encoders"
+					}
+				]
+			},
+			{
+				port: "B",
+				mode: "position_passes",
+				settings: {
+					comparisonType: "<",
+					threshold: -975,
+					units: "degrees"
+				},
+				actions: [
+					{
+						port: "B",
+						mode: "stop",
+						settings: {
+							stopType: "brake"
+						}
+					},
+					{
+						port: "B",
+						mode: "reset_encoders"
+					}
+				]
+			},
+			{
+				port: "D",
+				mode: "position_passes",
+				settings: {
+					comparisonType: ">",
+					threshold: 770,
+					units: "degrees"
+				},
+				actions: [
+					{
+						port: "D",
+						mode: "stop",
+						settings: {
+							stopType: "brake"
+						}
+					},
+					{
+						port: "D",
+						mode: "reset_encoders"
+					}
+				]
+			},
+			{
+				channel: "Brick Button",
+				mode: "press_in",
+				settings: {
+					button: "button_back"
+				},
+				actions: [
+					{
+						channel: "Program",
+						mode: "program_stop"
+					}
+				]
+			}
+		];
+
+		// EV3 data
+		// These are used only in the port config panel, and probably shouldn't be in the root scope
 		$scope.inputPorts = [
 			"1", "2", "3", "4"
 		];
@@ -133,143 +358,336 @@
 			"Large Motor", "Medium Motor", undefined
 		];
 
-		// Code Model
-		$scope.triggers = [
-			{
-				port: "1",
-				mode: "press_in",
-				settings: {},
-				actions: [
-					{
-						port: "A",
-						mode: "start_fwd",
-						settings: {
-							power: "high"
-						}
-					}
-				]
-			},
-			{
-				port: "1",
-				mode: "release",
-				settings: {},
-				actions: [
-					{
-						port: "A",
-						mode: "start_bkwd",
-						settings: {
-							power: "medium"
-						}
-					}
-				]
-			},
-			{
-				port: "2",
-				mode: "press_in",
-				settings: {},
-				actions: [
-					{
-						port: "A",
-						mode: "stop",
-						settings: {
-							stopType: "coast"
-						}
-					}
-				]
-			}
-		];
-
 		// Settings options, sorted by peripheral and mode
-		$scope.peripheralInputModes = {
+		// Used to populate the mode and setting data for code blocks.
+		// Every block must have a mode, which determines which settings, if any, are available
+		$scope.channelModes = {
 			"Touch Sensor": {
-				"press_in": {},
-				"release": {},
-				"count_exceeds": {
-					threshold: {
-						type: "number"
+				input: {
+					"press_in": {},
+					"release": {},
+					"count_exceeds": {
+						threshold: {
+							type: "number"
+						}
 					}
 				}
 			},
 			"Ultrasonic Sensor": {
-				"enter_range": {
-					threshold: {
-						type: "number"
+				input: {
+					"enter_range": {
+						threshold: {
+							type: "number"
+						},
+						units: {
+							type: "selectable",
+							options: ["inches", "centimeters"]
+						}
 					},
-					units: {
-						type: "dropdown",
-						options: ["inches", "centimeters", "klicks"]
-					}
-				},
-				"exit_range": {
-					threshold: {
-						type: "number"
-					},
-					units: {
-						type: "dropdown",
-						options: ["inches", "centimeters", "klicks"]
+					"exit_range": {
+						threshold: {
+							type: "number"
+						},
+						units: {
+							type: "selectable",
+							options: ["inches", "centimeters"]
+						}
 					}
 				}
-			}
-		};
-
-		$scope.peripheralOutputModes = {
+			},
+			"Color Sensor": {
+				input: {
+					"detect_color": {
+						color: {
+							type: "selectable",
+							options: ["black", "blue", "green", "yellow", "red", "white", "brown", "none"]
+						}
+					},
+					"reflected_light_passes": {
+						comparisonType: {
+							type: "selectable",
+							options: ["<", ">"]
+						},
+						threshold: {
+							type: "selectable",
+							options: ["dark", "dim", "bright"]
+						}
+					},
+					"ambient_light_passes": {
+						comparisonType: {
+							type: "selectable",
+							options: ["<", ">"]
+						},
+						threshold: {
+							type: "selectable",
+							options: ["dark", "dim", "bright"]
+						}
+					},
+					"rgb_value_passes": {
+						comparisonType: {
+							type: "selectable",
+							options: ["<", ">"]
+						},
+						threshold: {
+							type: "number"
+						},
+						color: {
+							type: "selectable",
+							options: ["red", "green", "blue"]
+						}
+					}
+				}
+			},
+			"Gyro Sensor": {
+				input: {
+					"position_passes": {
+						comparisonType: {
+							type: "selectable",
+							options: ["<", ">"]
+						},
+						threshold: {
+							type: "number"
+						},
+						units: {
+							type: "selectable",
+							options: ["degrees", "rotations"]
+						}
+					},
+					"rate_passes": {
+						comparisonType: {
+							type: "selectable",
+							options: ["<", ">"]
+						},
+						threshold: {
+							type: "number"
+						},
+						units: {
+							type: "selectable",
+							options: ["deg/sec", "rot/sec"]
+						}
+					}
+				}
+			},
+			// Motors
 			"Large Motor": {
-				"start_fwd": {
-					power: {
-						type: "dropdown",
-						options: ["high", "medium", "low"]
+				input: {
+					"position_passes": {
+						comparisonType: {
+							type: "selectable",
+							options: ["<", ">"]
+						},
+						threshold: {
+							type: "number"
+						},
+						units: {
+							type: "selectable",
+							options: ["degrees", "rotations"]
+						}
+					},
+					"rate_passes": {
+						comparisonType: {
+							type: "selectable",
+							options: ["<", ">"]
+						},
+						threshold: {
+							type: "number"
+						},
+						units: {
+							type: "selectable",
+							options: ["deg/sec", "rot/sec"]
+						}
 					}
 				},
-				"start_bkwd": {
-					power: {
-						type: "dropdown",
-						options: ["high", "medium", "low"]
-					}
-				},
-				"stop": {
-					stopType: {
-						type: "dropdown",
-						options: ["coast", "brake"]
-					}
+				output: {
+					"start_fwd": {
+						power: {
+							type: "selectable",
+							options: ["high", "medium", "low"]
+						}
+					},
+					"start_bkwd": {
+						power: {
+							type: "selectable",
+							options: ["high", "medium", "low"]
+						}
+					},
+					"stop": {
+						stopType: {
+							type: "selectable",
+							options: ["coast", "brake"]
+						}
+					},
+					"reset_encoders": {}
 				}
 			},
 			"Medium Motor": {
-				"start_fwd": {
-					power: {
-						type: "dropdown",
-						options: ["high", "medium", "low"]
+				input: {
+					"position_passes": {
+						comparisonType: {
+							type: "selectable",
+							options: ["<", ">"]
+						},
+						threshold: {
+							type: "number"
+						},
+						units: {
+							type: "selectable",
+							options: ["degrees", "rotations"]
+						}
+					},
+					"rate_passes": {
+						comparisonType: {
+							type: "selectable",
+							options: ["<", ">"]
+						},
+						threshold: {
+							type: "number"
+						},
+						units: {
+							type: "selectable",
+							options: ["deg/sec", "rot/sec"]
+						}
 					}
 				},
-				"start_bkwd": {
-					power: {
-						type: "dropdown",
-						options: ["high", "medium", "low"]
-					}
-				},
-				"stop": {
-					stopType: {
-						type: "dropdown",
-						options: ["coast", "brake"]
+				output: {
+					"start_fwd": {
+						power: {
+							type: "selectable",
+							options: ["high", "medium", "low"]
+						}
+					},
+					"start_bkwd": {
+						power: {
+							type: "selectable",
+							options: ["high", "medium", "low"]
+						}
+					},
+					"stop": {
+						stopType: {
+							type: "selectable",
+							options: ["coast", "brake"]
+						}
+					},
+					"reset_encoders": {}
+				}
+			},
+			// No configuration is required for these channels //
+			"Brick Button": {
+				input: {
+					"press_in": {
+						button: {
+							type: "selectable",
+							options: ["button_up", "button_down", "button_left", "button_right", "button_center", "button_back"]
+						}
+					},
+					"release": {
+						button: {
+							type: "selectable",
+							options: ["button_up", "button_down", "button_left", "button_right", "button_center", "button_back"]
+						}
+					},
+					"count_exceeds": {
+						button: {
+							type: "selectable",
+							options: ["button_up", "button_down", "button_left", "button_right", "button_center", "button_back"]
+						},
+						threshold: {
+							type: "number"
+						}
 					}
 				}
 			},
-		};
+			"Brick Sound": {
+				output: {
+					"play_tone": {
+						frequency: {
+							type: "number"
+						},
+						volume: {
+							type: "number"
+						},
+						duration: {
+							type: "number"
+						}
+					},
+					"play_note": {
+						note: {
+							type: "selectable",
+							options: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+						},
+						octave: {
+							type: "number"
+						},
+						volume: {
+							type: "number"
+						},
+						duration: {
+							type: "number"
+						}
+					},
+					"play_file": {
+						filename: {
+							type: "text"
+						},
+						volume: {
+							type: "number"
+						}
+					}
+				}
+			},
+			"Brick Light": {
+				output: {
+					"light_on": {
+						color: {
+							type: "selectable",
+							options: ["red", "yellow", "green"]
+						}
+					},
+					"light_off": {}
+				}
+			},
+			"Program": {
+				input: {
+					"program_start": {}
+				},
+				output: {
+					"program_stop": {}
+				}
+			}
+		}
 
-		$scope.colorsByPeripheral = {
+		// Channel colors are applied to all blocks using that channel
+		$scope.channelColors = {
+			undefined: "gray",
 			"Touch Sensor": "forestgreen",
 			"Ultrasonic Sensor": "darkviolet",
 			"Gyro Sensor": "magenta",
 			"Color Sensor": "turquoise",
 			"Large Motor": "crimson",
-			"Medium Motor": "orangered"
+			"Medium Motor": "orangered",
+			"Infrared Sensor": "maroon",
+			"Brick Button": "yellow",
+			"Brick Light": "darkslateblue",
+			"Brick Sound": "violet",
+			"Program": "lightgray"
 		};
 
+		// Gets the current code mode and config data as a single JSON object
+		// Alerts the user of the code, which can be sleected for copy-pasting
+		// TODO: rename, change to pass program directly to interpreter/brick
 		$scope.getJSON = function () {
 			alert(angular.toJson({
 				portConfig: $scope.portConfig,
 				triggers: $scope.triggers
 			}));
-		}
+		};
+
+		// Opens a prompt into which code can be pasted
+		$scope.loadProgram = function () {
+			var data = JSON.parse(prompt("Enter program data (JSON):"));
+			$scope.portConfig = data.portConfig;
+			$scope.triggers = data.triggers;
+		};
 
 	});
 	</script>
