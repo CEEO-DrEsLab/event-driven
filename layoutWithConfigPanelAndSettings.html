@@ -92,6 +92,7 @@
 
 		<table ng-repeat="trigger in triggers" class="group-container">
 			<tr>
+				<!-- <td edp-cell cell="trigger" type="'trigger'" channel-colors="channelColors" port-config="portConfig" channel-modes="channelModes"></td> -->
 				<td class="trigger-cell" rowspan="9999" ng-style="{background:channelColors[trigger.port ? portConfig[trigger.port] : trigger.channel],borderColor:channelColors[trigger.port ? portConfig[trigger.port] : trigger.channel]}">
 					{{trigger.port ? 'Port ' + trigger.port + ' ' + portConfig[trigger.port] : trigger.channel}}<br/>
 					<select ng-model="trigger.mode" ng-options="mode as mode for (mode, options) in channelModes[trigger.port ? portConfig[trigger.port] : trigger.channel].input"></select>
@@ -102,7 +103,7 @@
 						<input ng-if="details.type === 'text'" ng-model="trigger.settings[setting]" type="text" size="15"></input>
 					</span>
 				</td>
-				<td ng-if="trigger.actions.length === 0" class="invisible action-cell">EMPTY CELL</td>
+				<td ng-if="trigger.actions.length === 0" class="invisible action-cell"></td>
 			</tr>
 			<tr ng-if="trigger.actions.length > 0" ng-repeat="action in trigger.actions">
 				<td class="action-cell" ng-style="{background:channelColors[action.port ? portConfig[action.port] : action.channel],borderColor:channelColors[action.port ? portConfig[action.port] : action.channel]}">
@@ -124,6 +125,33 @@
 
 	<script>
 	var app = angular.module('myApp', []);
+	app.directive('edpCell', function() {
+		return {
+			restrict: 'A',
+			templateUrl: 'edp-cell.html',
+			scope: {
+				cellType: '=type',
+				cellData: '=data',
+				channelColors: '=',
+				portConfig: '=',
+				channelModes: '='
+			},
+			link: function (scope, iElem, iAttr) {
+				iElem.attr("class", scope.cellType + "-cell");
+				if (scope.cellType == 'trigger') {
+					iElem.attr("rowspan", 9999);
+				}
+				console.log(scope);
+				// Substitute for ngStyle directive, which cannot be easily added as a sibling directive
+				scope.$watch('cellData', function (newVal, oldVal) {
+					// TODO: only runs the first time!
+					console.log("changed!");
+					var color = scope.channelColors[newVal.channel ? newVal.channel : scope.portConfig[newVal.port]];
+					iElem.css('background-color', color);
+				}, true);
+			}
+		};
+	});
 	app.controller('myCtrl', function($scope) {
 		// Port Configuration Panel Dats
 		// Set by blocks in port config panel
