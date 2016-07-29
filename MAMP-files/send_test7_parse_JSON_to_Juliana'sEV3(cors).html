@@ -23,6 +23,11 @@
 			height:25px;
 			width:120px;
 		}
+		#cancel {
+			height:25px;
+			width:120px;
+			background-color: red;
+		}
 		#destination {
 			height:25px;
 			width:210px;
@@ -60,7 +65,6 @@
 	</style>
 
 	<script type="text/javascript"></script>
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script><!--not sure if we need this anymore as I don't think we use JQuery anymore in this project. Test without this tag, and get rid of it if we no longer need it-->
 	<script src= "data_model_parser3(cors).js"></script>
 	<script>
 	var startTime = 0;
@@ -85,33 +89,51 @@
 	}
 
 	// Make the actual CORS request.
-	function makeCorsRequest(url, data, index,isStart) {
-		var xhr = createCORSRequest('POST', url);
-		console.log("makeCorsRequest FCN://\t CORS Request Assembled.");
-  		if (!xhr) {
+	function makeCorsRequest(url, data, index, isStart) {
+		// start send timer, this prints out the latency between sending and receiving the response.
+		startTime = Date.now();
+		var xhr = createCORSRequest('POST', url); // create XMLHttpRequest object
+			//console.log("makeCorsRequest FCN://\t CORS Request Assembled.");
+  		if (!xhr) { // prints alert if CORS isn't supported on the user's browser.
     		alert('CORS not supported');
-    	return;
+    		return;
   		}
-  			// manage callbacks from EV3
-  		function callback(response) {
+  			// manage callbacks from EV3, test for state change, and handle setting corresponding actions
+  		function callback(response,trig_dex,firstIter) {
 			console.log('\t\tcallback FCN://\t' + JSON.stringify(response));
-			if (response.value == "Not found") {
-				console.error("Invalid Input, please fix and retry.");
+			if (response.value == "Not found") { 
+				// console.error("Invalid Input, please fix and retry.");
 			}
-			else {
+			else if (response.value == "none") { // response value for successful set instruction.
+				//console.log("\t\tcallback FCN://\tSET response: " + response.value +" received with code: " + response.httpCode);
 				document.getElementById("response_log").innerHTML = JSON.stringify(response);
-				console.log('\t\tcallback FCN://\tResponse received from CORS HTTP request to ' + url);
-				console.log('\t\tcallback FCN://\t HTTP response code: ' + response.httpCode);
-				console.log('\t\tcallback FCN://\t HTTP response value: ' + response.value);
-				if (response.value == 1) {
-					console.log("\t\tcallback FCN://\t Trigger fired in button press callback!!");
-					modelParse.parse_data(JSON.stringify({"status":"set","sm_type":"large motor","port":"outA","info":"run_forever","value":75}));
+				
+			}
+			else { // if valid data, handle HTTP response
+				//console.log("\t\tcallback FCN://\tGET response: " + response.value +" received with code: " + response.httpCode);
+				document.getElementById("response_log").innerHTML = JSON.stringify(response);
+				
+				if (firstIter) { // if first time contacting EV3, just add value to lastValues object
+					modelParse.lastValues[modelParse.trigger_list[trig_dex].port] = response.value;
+					console.log(modelParse.lastValues[modelParse.trigger_list[trig_dex].port])
+				}
+				else if (modelParse.is_state_change(response.value, modelParse.trigger_list[trig_dex], modelParse.lastValues[modelParse.trigger_list[trig_dex].port])) {
+					// console.log("\t\tcallback Fcn://\t State change detected in: " + modelParse.config[modelParse.trigger_list[trig_dex].port]);
+	
+					modelParse.lastValues[modelParse.trigger_list[trig_dex].port] = response.value; // if a state change occurs, change the last value to be the current value.
+					modelParse.send_set(modelParse.config, modelParse.trigger_list[trig_dex].actions);
+					// console.log("\t\tcallback Fcn://\t SET sent for all corresponding actions! Woohoo!!!!");
+
+				}
+				else {
+					// console.log("\t\tcallback FCN://\t No state change detected in trigger #: " + trig_dex);
 				}
 			}
 		}
-		// Response handlers.
+		// temporary stop command to physically stop the ev3 during Useless Machine testing
+				// Response handlers.
 		xhr.onload = function() {
-			callback(JSON.parse(xhr.responseText));
+			callback(JSON.parse(xhr.responseText),index,isStart); // need to pass the currentValues object into the callback so it can be set
 			console.log("\txhr.onload EVENT://\t Request successfully sent.");
 			var endTime = Date.now();
 			console.log("\txhr.onload EVENT://\tmessage sent in: " + (endTime - startTime) + " msec"); // log elapsed send time
@@ -122,8 +144,10 @@
 			console.log("\txhr.onerror EVENT://\tmessage sent in: " + (endTime - startTime) + " msec");
 		};
 		xhr.send(data);
-		console.log("makeCorsRequest FCN://\t CORS Request Sent.");
+		//console.log("makeCorsRequest FCN://\t CORS Request Sent.");
 	}
+	
+
 	</script>
 </head>
 
@@ -132,11 +156,14 @@
 		<h1>Send Trial 7: Parse Data Model and send via CORS to Juliana's EV3</h1>
 	</div>
 	<h2>Paste set request below</h2>
+	<h5>{"status":"set","sm_type":"large motor","port":"outA","info":"run_forever","value":75}</h5>
+	<h5>{"status":"get","sm_type":"touch","port":"in1","info":"value","value":-1}</h5>
 	<!--http://130.64.94.159:5000-->
 	<form onsubmit="return false;">
 		<textarea name="value1" id="data" rows="10" cols="30"></textarea>
 		<button id="submit_button" type="button" onclick="modelParse.parse_data(document.getElementById('data').value)">Send!</button>
 	</form>
+	<button id="cancel" type="button" onclick="modelParse.handleStop()">STOP</button>
 	<div id="send_col">
 		<h4 id="send_title">Send Log</h4>
 		<div id="send_log"></div>
