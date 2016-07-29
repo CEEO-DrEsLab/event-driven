@@ -1,7 +1,7 @@
 <!--
 	Title: Send Test v6.5
 	By: Benjamin Zackin
-	Last Modified: 7/28/2016
+	Last Modified: 7/29/2016
 	Notes: Sends HTTP POST request to Juliana's EV3 (IP 130.64.189.185:5000, Port 5000)
 		via JQuery and AJAX using CORS from a MAMP server hosted on Ben's laptop, IP 130.64.94.22 port 8888.
 
@@ -111,10 +111,10 @@
 				console.log('\t\tcallback FCN://\tResponse received from CORS HTTP request to ' + url);
 				console.log('\t\tcallback FCN://\t HTTP response code: ' + response.httpCode);
 				console.log('\t\tcallback FCN://\t HTTP response value: ' + response.value);
-				if (response.value == 1) {
-					console.log("\t\tcallback FCN://\t Trigger fired in button press callback!!");
-					send_setter_stuff(JSON.stringify({"status":"set","sm_type":"large motor","port":"outA","info":"run_forever","value":75}));
-				}
+				// if (response.value == 1) {
+				// 	console.log("\t\tcallback FCN://\t Trigger fired in button press callback!!");
+				// 	send_setter_stuff(JSON.stringify({"status":"set","sm_type":"large motor","port":"outA","info":"run_forever","value":75}));
+				// }
 			}
 		}
 		// Response handlers.
