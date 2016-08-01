@@ -134,8 +134,8 @@
 		<button ng-click="showCode()">Show Code</button><br/>
 		<button ng-click="importProgram()">Import Program</button><br/>
 		<!-- Buttons added for communication -->
-		<button ng-click="modelParse.parse_data(angular.toJson({portConfig: $scope.portConfig, triggers: $scope.triggers}))">SEND</button><br/>
-		<button ng-click="modelParse.handleStop()">STOP</button><br/>
+		<button ng-click="startSending()">SEND</button><br/>
+		<button ng-click="stopSending()">STOP</button><br/>
 	</div>
 	<div id="port-config" class="shrink-box">
 		<h2 class="column-label">EV3 Ports</h2>
@@ -772,6 +772,17 @@
 			$scope.portConfig = data.portConfig;
 			$scope.triggers = data.triggers;
 		};
+
+		$scope.startSending = function () {
+			modelParse.parse_data(angular.toJson({
+				portConfig: $scope.portConfig,
+				triggers: $scope.triggers
+			}));
+		};
+
+		$scope.stopSending = function () {
+			modelParse.handleStop();
+		}
 
 	});
 	</script>
