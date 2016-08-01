@@ -1,0 +1,778 @@
+<!--
+	Made by Caleb Lucas-Foley
+	2016-08-01
+-->
+
+<!doctype HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Static Layout</title>
+	<style>
+	* {
+		margin: 0;
+	}
+	html, body {
+		height: 100%;
+	}
+	body {
+		font-family: "Comic Sans MS", sans-serif;
+		background-image: url("bluestuds.png");
+		background-attachment: fixed;
+		background-color: navy;
+		color: black;
+		text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+		text-align: center;
+	}
+	table {
+		margin: 10px auto;
+		border-spacing: 0;
+	}
+	h1, h2, h3 {
+		text-align: center;
+	}
+	#left-sidebar {
+		position: fixed;
+		left: 10px;
+		top: 10px;
+		width: 200px;
+		text-align: left;
+		overflow: auto;
+	}
+	#right-sidebar {
+		position: fixed;
+		right: 10px;
+		top: 10px;
+		width: 200px;
+		text-align: center;
+	}
+	.shrink-box {
+		background-color: gray;
+		border: 3px gray outset;
+		border-radius: 20px;
+		padding-top: 8px;
+		padding-bottom: 8px;
+		padding-left: 12px;
+		padding-right: 12px;
+		display: inline-block;
+	}
+	#port-config {
+		margin: 10px auto;
+	}
+	.port-config-cell {
+		width: 175px;
+		height: 70px;
+		vertical-align: top;
+		background-color: gray;
+		border: 3px gray inset;
+		border-bottom-right-radius: 50% 20px;
+		border-top-right-radius: 50% 20px;
+		border-bottom-left-radius: 50% 20px;
+		border-top-left-radius: 50% 20px;
+	}
+	/* Code blocks */
+	.group-container td {
+		width: 200px;
+		height: 100px;
+		vertical-align: top;
+		border: 3px outset;
+	}
+	.input-cell {
+		background-color: gray;
+		border-bottom-left-radius: 20px 50px;
+		border-top-left-radius: 20px 50px;
+	}
+	.output-cell {
+		background-color: gray;
+		border-bottom-right-radius: 20px 50px;
+		border-top-right-radius: 20px 50px;
+	}
+	.invisible {
+		visibility: hidden;
+	}
+	.edp-arrow {
+		position: absolute;
+		margin-left: -7px;
+		margin-top: 38px;
+		border-left: 12px solid black;
+		border-top: 12px solid transparent;
+		border-bottom: 12px solid transparent;
+		height: 0;
+		width: 0;
+	}
+	.table-label td {
+		width: 200px;
+	}
+	</style>
+	<!-- Get AngularJS from Google CDN -->
+	<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+
+	<script src="sendTest8.js"></script>
+	<script src="data_model_parser3(cors).js"></script>
+</head>
+
+<body ng-app="myApp" ng-controller="myCtrl">
+	<div id="left-sidebar" class="shrink-box">
+		<h2>What is This?</h2><br/>
+		<span style="text-shadow:none;">
+			<p>
+				This prototype demonstrates one possible way to configure the code blocks.
+			</p><br/>
+			<p>
+				Every block belongs to a <em>channel</em>, which is something like "Port 1 Touch Sensor."
+			</p><br/>
+			<p>
+				Every block has a <em>mode</em>, which determines what other <em>settings</em> are available. For now, these can be seen as title-text on mouseover.
+			</p><br/>
+			<p>
+				For now, there is no way to directly add or remove code blocks in this prototype. The <em>Import Program</em> button can be used to import a JSON string representing the code.
+			</p>
+		</span>
+	</div>
+	<div id="right-sidebar" class="shrink-box">
+		<h2>Import/Export</h2><br/>
+		<button ng-click="showCode()">Show Code</button><br/>
+		<button ng-click="importProgram()">Import Program</button><br/>
+		<!-- Buttons added for communication -->
+		<button ng-click="modelParse.parse_data(angular.toJson({portConfig: $scope.portConfig, triggers: $scope.triggers}))">SEND</button><br/>
+		<button ng-click="modelParse.handleStop()">STOP</button><br/>
+	</div>
+	<div id="port-config" class="shrink-box">
+		<h2 class="column-label">EV3 Ports</h2>
+		<table>
+			<tr>
+				<td ng-repeat="x in inputPorts" class="port-config-cell" ng-style="{background:channelColors[portConfig[x]]}">
+					{{x}}<br/>
+					<select ng-model="portConfig[x]" ng-options="y for y in sensors"></select>
+				</td>
+			</tr>
+			<tr>
+				<td ng-repeat="x in outputPorts" class="port-config-cell" ng-style="{background:channelColors[portConfig[x]]}">
+					{{x}}<br/>
+					<select ng-model="portConfig[x]" ng-options="y for y in motors"></select>
+				</td>
+			</tr>
+		</table>
+	</div>
+	<div id="code-area">
+		<table class="table-label">
+			<tr>
+				<td><h2 class="shrink-box">WHEN</h2></td>
+				<td><h2 class="shrink-box">THEN</h2></td>
+			</tr>
+		</table>
+
+		<table ng-repeat="trigger in triggers" class="group-container">
+			<tr>
+				<td edp-cell data="trigger" type="'input'" channel-colors="channelColors" port-config="portConfig" channel-modes="channelModes"></td>
+				<td ng-if="trigger.actions.length === 0" class="invisible action-cell"></td>
+			</tr>
+			<tr ng-if="trigger.actions.length > 0" ng-repeat="action in trigger.actions">
+				<td edp-cell data="action" type="'output'" channel-colors="channelColors" port-config="portConfig" channel-modes="channelModes"></td>
+				
+			</tr>
+		</table>
+	</div>
+
+	<script>
+	var app = angular.module('myApp', []);
+	app.directive('edpCell', function() {
+		return {
+			restrict: 'A',
+			templateUrl: 'edp-cell.html',
+			scope: {
+				cellType: '=type',
+				cellData: '=data',
+				channelColors: '=',
+				portConfig: '=',
+				channelModes: '='
+			},
+			link: function (scope, iElem, iAttr) {
+				iElem.attr("class", scope.cellType + "-cell");
+				if (scope.cellType == 'input') {
+					iElem.attr("rowspan", 9999);
+				}
+				// Substitute for ngStyle directive, which cannot be easily added as a sibling to a custom directive
+				scope.$watch('cellData', function (newVal, oldVal) {
+					var color = scope.channelColors[newVal.channel ? newVal.channel : scope.portConfig[newVal.port]];
+					iElem.css('background-color', color);
+					iElem.css('border-color', color);
+				}, true);
+				scope.$watch('portConfig', function (newVal, oldVal) {
+					if (!scope.cellData.channel) {
+						var color = scope.channelColors[newVal[scope.cellData.port]]
+						iElem.css('background-color', color);
+						iElem.css('border-color', color);
+					}
+				}, true);
+			}
+		};
+	});
+	app.controller('myCtrl', function($scope) {
+		// Port Configuration Panel Dats
+		// Set by blocks in port config panel
+		// Accessed by code blocks which refer to ports but don't know the peripherals
+		// Heavily EV3-specifc
+		$scope.portConfig = {
+			'1': "Touch Sensor",
+			// '2': "None",
+			// '3': "None",
+			'4': "Color Sensor",
+			'A': "Large Motor",
+			'B': "Large Motor",
+			// 'C': "None",
+			'D': "Medium Motor"
+		};
+
+		// Code Model
+		// Stores the actual trigger-action WHEN-THEN pairs
+		// Currently hard-coded; everything can be changed but the specific channels/ports
+		// The code that is here now is the elephant demo code, which is untested in this form
+		$scope.triggers = [
+			{
+				channel: "Program",
+				mode: "program_start",
+				actions: [
+					{
+						port: "B",
+						mode: "reset_encoders"
+					},
+					{
+						port: "D",
+						mode: "reset_encoders"
+					}
+				]
+			},
+			{
+				channel: "Brick Button",
+				mode: "press_in",
+				settings: {
+					button: "button_up"
+				},
+				actions: [
+					{
+						port: "A",
+						mode: "start_fwd",
+						settings: {
+							power: "high"
+						}
+					}
+				]
+			},
+			{
+				channel: "Brick Button",
+				mode: "press_in",
+				settings: {
+					button: "button_down"
+				},
+				actions: [
+					{
+						port: "A",
+						mode: "start_bkwd",
+						settings: {
+							power: "high"
+						}
+					}
+				]
+			},
+			{
+				channel: "Brick Button",
+				mode: "press_in",
+				settings: {
+					button: "button_center"
+				},
+				actions: [
+					{
+						port: "A",
+						mode: "stop",
+						settings: {
+							stopType: "brake"
+						}
+					}
+				]
+			},
+			{
+				channel: "Brick Button",
+				mode: "press_in",
+				settings: {
+					button: "button_left"
+				},
+				actions: [
+					{
+						port: "B",
+						mode: "start_fwd",
+						settings: {
+							power: "medium"
+						}
+					}
+				]
+			},
+			{
+				port: "1",
+				mode: "press_in",
+				actions: [
+					{
+						port: "B",
+						mode: "stop",
+						settings: {
+							stopType: "coast"
+						}
+					},
+					{
+						port: "D",
+						mode: "start_bkwd",
+						settings: {
+							power: "medium"
+						}
+					}
+				]
+			},
+			{
+				port: "4",
+				mode: "rgb_value_passes",
+				settings: {
+					color: "red",
+					threshold: 190,
+					comparisonType: ">"
+				},
+				actions: [
+					{
+						channel: "Brick Sound",
+						mode: "play_file",
+						settings: {
+							filename: "elephant_call.rsf",
+							volume: 100
+						}
+					},
+					{
+						port: "B",
+						mode: "start_fwd",
+						settings: {
+							power: "high"
+						}
+					},
+					{
+						port: "D",
+						mode: "start_bkwd",
+						settings: {
+							power: "medium"
+						}
+					},
+					{
+						port: "B",
+						mode: "reset_encoders"
+					},
+					{
+						port: "D",
+						mode: "reset_encoders"
+					}
+				]
+			},
+			{
+				port: "B",
+				mode: "position_passes",
+				settings: {
+					comparisonType: "<",
+					threshold: -975,
+					units: "degrees"
+				},
+				actions: [
+					{
+						port: "B",
+						mode: "stop",
+						settings: {
+							stopType: "brake"
+						}
+					},
+					{
+						port: "B",
+						mode: "reset_encoders"
+					}
+				]
+			},
+			{
+				port: "D",
+				mode: "position_passes",
+				settings: {
+					comparisonType: ">",
+					threshold: 770,
+					units: "degrees"
+				},
+				actions: [
+					{
+						port: "D",
+						mode: "stop",
+						settings: {
+							stopType: "brake"
+						}
+					},
+					{
+						port: "D",
+						mode: "reset_encoders"
+					}
+				]
+			},
+			{
+				channel: "Brick Button",
+				mode: "press_in",
+				settings: {
+					button: "button_back"
+				},
+				actions: [
+					{
+						channel: "Program",
+						mode: "program_stop"
+					}
+				]
+			}
+		];
+
+		// EV3 data
+		// These are used only in the port config panel, and probably shouldn't be in the root scope
+		$scope.inputPorts = [
+			"1", "2", "3", "4"
+		];
+		$scope.outputPorts = [
+			"A", "B", "C", "D"
+		];
+		$scope.sensors = [
+			"Touch Sensor", "Color Sensor", "Gyro Sensor", "Ultrasonic Sensor", undefined
+		];
+		$scope.motors = [
+			"Large Motor", "Medium Motor", undefined
+		];
+
+		// Settings options, sorted by peripheral and mode
+		// Used to populate the mode and setting data for code blocks.
+		// Every block must have a mode, which determines which settings, if any, are available
+		$scope.channelModes = {
+			"Touch Sensor": {
+				input: {
+					"press_in": {},
+					"release": {},
+					"count_exceeds": {
+						threshold: {
+							type: "number"
+						}
+					}
+				}
+			},
+			"Ultrasonic Sensor": {
+				input: {
+					"enter_range": {
+						threshold: {
+							type: "number"
+						},
+						units: {
+							type: "selectable",
+							options: ["inches", "centimeters"]
+						}
+					},
+					"exit_range": {
+						threshold: {
+							type: "number"
+						},
+						units: {
+							type: "selectable",
+							options: ["inches", "centimeters"]
+						}
+					}
+				}
+			},
+			"Color Sensor": {
+				input: {
+					"detect_color": {
+						color: {
+							type: "selectable",
+							options: ["black", "blue", "green", "yellow", "red", "white", "brown", "none"]
+						}
+					},
+					"reflected_light_passes": {
+						comparisonType: {
+							type: "selectable",
+							options: ["<", ">"]
+						},
+						threshold: {
+							type: "selectable",
+							options: ["dark", "dim", "bright"]
+						}
+					},
+					"ambient_light_passes": {
+						comparisonType: {
+							type: "selectable",
+							options: ["<", ">"]
+						},
+						threshold: {
+							type: "selectable",
+							options: ["dark", "dim", "bright"]
+						}
+					},
+					"rgb_value_passes": {
+						comparisonType: {
+							type: "selectable",
+							options: ["<", ">"]
+						},
+						threshold: {
+							type: "number"
+						},
+						color: {
+							type: "selectable",
+							options: ["red", "green", "blue"]
+						}
+					}
+				}
+			},
+			"Gyro Sensor": {
+				input: {
+					"position_passes": {
+						comparisonType: {
+							type: "selectable",
+							options: ["<", ">"]
+						},
+						threshold: {
+							type: "number"
+						},
+						units: {
+							type: "selectable",
+							options: ["degrees", "rotations"]
+						}
+					},
+					"rate_passes": {
+						comparisonType: {
+							type: "selectable",
+							options: ["<", ">"]
+						},
+						threshold: {
+							type: "number"
+						},
+						units: {
+							type: "selectable",
+							options: ["deg/sec", "rot/sec"]
+						}
+					}
+				}
+			},
+			// Motors
+			"Large Motor": {
+				input: {
+					"position_passes": {
+						comparisonType: {
+							type: "selectable",
+							options: ["<", ">"]
+						},
+						threshold: {
+							type: "number"
+						},
+						units: {
+							type: "selectable",
+							options: ["degrees", "rotations"]
+						}
+					},
+					"rate_passes": {
+						comparisonType: {
+							type: "selectable",
+							options: ["<", ">"]
+						},
+						threshold: {
+							type: "number"
+						},
+						units: {
+							type: "selectable",
+							options: ["deg/sec", "rot/sec"]
+						}
+					}
+				},
+				output: {
+					"start_fwd": {
+						power: {
+							type: "selectable",
+							options: ["high", "medium", "low"]
+						}
+					},
+					"start_bkwd": {
+						power: {
+							type: "selectable",
+							options: ["high", "medium", "low"]
+						}
+					},
+					"stop": {
+						stopType: {
+							type: "selectable",
+							options: ["coast", "brake"]
+						}
+					},
+					"reset_encoders": {}
+				}
+			},
+			"Medium Motor": {
+				input: {
+					"position_passes": {
+						comparisonType: {
+							type: "selectable",
+							options: ["<", ">"]
+						},
+						threshold: {
+							type: "number"
+						},
+						units: {
+							type: "selectable",
+							options: ["degrees", "rotations"]
+						}
+					},
+					"rate_passes": {
+						comparisonType: {
+							type: "selectable",
+							options: ["<", ">"]
+						},
+						threshold: {
+							type: "number"
+						},
+						units: {
+							type: "selectable",
+							options: ["deg/sec", "rot/sec"]
+						}
+					}
+				},
+				output: {
+					"start_fwd": {
+						power: {
+							type: "selectable",
+							options: ["high", "medium", "low"]
+						}
+					},
+					"start_bkwd": {
+						power: {
+							type: "selectable",
+							options: ["high", "medium", "low"]
+						}
+					},
+					"stop": {
+						stopType: {
+							type: "selectable",
+							options: ["coast", "brake"]
+						}
+					},
+					"reset_encoders": {}
+				}
+			},
+			// No configuration is required for these channels //
+			"Brick Button": {
+				input: {
+					"press_in": {
+						button: {
+							type: "selectable",
+							options: ["button_up", "button_down", "button_left", "button_right", "button_center", "button_back"]
+						}
+					},
+					"release": {
+						button: {
+							type: "selectable",
+							options: ["button_up", "button_down", "button_left", "button_right", "button_center", "button_back"]
+						}
+					},
+					"count_exceeds": {
+						button: {
+							type: "selectable",
+							options: ["button_up", "button_down", "button_left", "button_right", "button_center", "button_back"]
+						},
+						threshold: {
+							type: "number"
+						}
+					}
+				}
+			},
+			"Brick Sound": {
+				output: {
+					"play_tone": {
+						frequency: {
+							type: "number"
+						},
+						volume: {
+							type: "number"
+						},
+						duration: {
+							type: "number"
+						}
+					},
+					"play_note": {
+						note: {
+							type: "selectable",
+							options: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+						},
+						octave: {
+							type: "number"
+						},
+						volume: {
+							type: "number"
+						},
+						duration: {
+							type: "number"
+						}
+					},
+					"play_file": {
+						filename: {
+							type: "text"
+						},
+						volume: {
+							type: "number"
+						}
+					}
+				}
+			},
+			"Brick Light": {
+				output: {
+					"light_on": {
+						color: {
+							type: "selectable",
+							options: ["red", "yellow", "green"]
+						}
+					},
+					"light_off": {}
+				}
+			},
+			"Program": {
+				input: {
+					"program_start": {}
+				},
+				output: {
+					"program_stop": {}
+				}
+			}
+		}
+
+		// Channel colors are applied to all blocks using that channel
+		$scope.channelColors = {
+			undefined: "gray",
+			"Touch Sensor": "forestgreen",
+			"Ultrasonic Sensor": "darkviolet",
+			"Gyro Sensor": "magenta",
+			"Color Sensor": "turquoise",
+			"Large Motor": "crimson",
+			"Medium Motor": "orangered",
+			"Infrared Sensor": "maroon",
+			"Brick Button": "yellow",
+			"Brick Light": "darkslateblue",
+			"Brick Sound": "violet",
+			"Program": "lightgray"
+		};
+
+		// Gets the current code mode and config data as a single JSON object
+		// Alerts the user of the code, which can be sleected for copy-pasting
+		// TODO: rename, change to pass program directly to interpreter/brick
+		$scope.showCode = function () {
+			alert(angular.toJson({
+				portConfig: $scope.portConfig,
+				triggers: $scope.triggers
+			}));
+		};
+
+		// Opens a prompt into which code can be pasted
+		$scope.importProgram = function () {
+			var data = JSON.parse(prompt("Enter program data (JSON):"));
+			$scope.portConfig = data.portConfig;
+			$scope.triggers = data.triggers;
+		};
+
+	});
+	</script>
+</body>
