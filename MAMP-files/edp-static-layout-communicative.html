@@ -56,6 +56,11 @@
 		padding-right: 12px;
 		display: inline-block;
 	}
+	#code-zone {
+		width: 175px;
+		height: 200px;
+		resize: none;
+	}
 	#port-config {
 		margin: 10px auto;
 	}
@@ -131,8 +136,9 @@
 	</div>
 	<div id="right-sidebar" class="shrink-box">
 		<h2>Import/Export</h2><br/>
+		<textarea id="code-zone" ng-model="codeJSON"></textarea><br/>
 		<button ng-click="showCode()">Show Code</button><br/>
-		<button ng-click="importProgram()">Import Program</button><br/>
+		<button ng-click="importCode()">Import Code</button>
 		<!-- Buttons added for communication -->
 		<button ng-click="startSending()">SEND</button><br/>
 		<button ng-click="stopSending()">STOP</button><br/>
@@ -169,7 +175,6 @@
 			</tr>
 			<tr ng-if="trigger.actions.length > 0" ng-repeat="action in trigger.actions">
 				<td edp-cell data="action" type="'output'" channel-colors="channelColors" port-config="portConfig" channel-modes="channelModes"></td>
-				
 			</tr>
 		</table>
 	</div>
@@ -756,22 +761,27 @@
 			"Program": "lightgray"
 		};
 
+		// The code as JSON. Represented in the interface in a textarea.
+		// Updated to match the model whenever a button is pressed
+		$scope.codeJSON = "";
+
 		// Gets the current code mode and config data as a single JSON object
 		// Alerts the user of the code, which can be sleected for copy-pasting
 		// TODO: rename, change to pass program directly to interpreter/brick
 		$scope.showCode = function () {
-			alert(angular.toJson({
+			$scope.codeJSON = angular.toJson({
 				portConfig: $scope.portConfig,
 				triggers: $scope.triggers
-			}));
+			});
 		};
 
 		// Opens a prompt into which code can be pasted
-		$scope.importProgram = function () {
-			var data = JSON.parse(prompt("Enter program data (JSON):"));
+		$scope.importCode = function () {
+			var data = JSON.parse($scope.codeJSON);
 			$scope.portConfig = data.portConfig;
 			$scope.triggers = data.triggers;
 		};
+
 
 		$scope.startSending = function () {
 			modelParse.parse_data(angular.toJson({
