@@ -121,16 +121,15 @@
 		<h2>What is This?</h2><br/>
 		<span style="text-shadow:none;">
 			<p>
-				This prototype demonstrates one possible way to configure the code blocks.
-			</p><br/>
-			<p>
 				Every block belongs to a <em>channel</em>, which is something like "Port 1 Touch Sensor."
 			</p><br/>
 			<p>
-				Every block has a <em>mode</em>, which determines what other <em>settings</em> are available. For now, these can be seen as title-text on mouseover.
+				State changes specified in <em>WHEN</em> blocks trigger actions specified in the corresponding <em>THEN</em> blocks.
+			<p><br/>
+				Every block can be configured just like in the LEGO EV3 software. For now, the setting names can be seen as alt-text on mouseover.
 			</p><br/>
 			<p>
-				For now, there is no way to directly add or remove code blocks in this prototype. The <em>Import Program</em> button can be used to import a JSON string representing the code.
+				For now, there is no way to directly add or remove code blocks in this prototype. The <em>Import/Export</em> panel can be used to paste in JSON code representations.
 			</p>
 		</span>
 	</div>
@@ -490,6 +489,10 @@
 						color: {
 							type: "selectable",
 							options: ["black", "blue", "green", "yellow", "red", "white", "brown", "none"]
+						},
+						switchTrigger: {
+							type: "selectable",
+							options: ["switchTo", "switchFrom"]
 						}
 					},
 					"reflected_light_passes": {
@@ -743,7 +746,7 @@
 					"program_stop": {}
 				}
 			}
-		}
+		};
 
 		// Channel colors are applied to all blocks using that channel
 		$scope.channelColors = {
