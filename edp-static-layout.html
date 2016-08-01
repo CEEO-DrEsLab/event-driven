@@ -16,7 +16,7 @@
 		height: 100%;
 	}
 	body {
-		font-family: "Comic Sans MS", sans-serif;
+		font-family: sans-serif;
 		background-image: url("bluestuds.png");
 		background-attachment: fixed;
 		background-color: navy;
@@ -111,18 +111,20 @@
 <body ng-app="myApp" ng-controller="myCtrl">
 	<div id="left-sidebar" class="shrink-box">
 		<h2>What is This?</h2><br/>
-		<p>
-			This prototype demonstrates one possible way to configure the code blocks.
-		</p><br/>
-		<p>
-			Every block belongs to a <em>channel</em>, which is something like "Port 1 Touch Sensor."
-		</p><br/>
-		<p>
-			Every block has a <em>mode</em>, which determines what other <em>settings</em> are available. For now, these can be seen as title-text on mouseover.
-		</p><br/>
-		<p>
-			For now, there is no way to directly add or remove code blocks in this prototype. The <em>Import Program</em> button can be used to import a JSON string representing the code.
-		</p>
+		<span style="text-shadow:none;">
+			<p>
+				This prototype demonstrates one possible way to configure the code blocks.
+			</p><br/>
+			<p>
+				Every block belongs to a <em>channel</em>, which is something like "Port 1 Touch Sensor."
+			</p><br/>
+			<p>
+				Every block has a <em>mode</em>, which determines what other <em>settings</em> are available. For now, these can be seen as title-text on mouseover.
+			</p><br/>
+			<p>
+				For now, there is no way to directly add or remove code blocks in this prototype. The <em>Import Program</em> button can be used to import a JSON string representing the code.
+			</p>
+		</span>
 	</div>
 	<div id="right-sidebar" class="shrink-box">
 		<h2>Import/Export</h2><br/>
