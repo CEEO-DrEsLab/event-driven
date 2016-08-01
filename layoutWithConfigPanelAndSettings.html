@@ -16,49 +16,73 @@
 		height: 100%;
 	}
 	body {
-		font-family: "Comic Sans MS", cursive, sans-serif;
-		background-image: url("http://ths.sps.lane.edu/biomes/Backgrounds/bluetrip.gif");
+		font-family: "Comic Sans MS", sans-serif;
+		background-image: url("bluestuds.png");
+		background-attachment: fixed;
 		background-color: navy;
 		color: black;
 		text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+		text-align: center;
+	}
+	table {
+		margin: 10px auto;
+		border-spacing: 0;
+	}
+	h1, h2, h3 {
+		text-align: center;
+	}
+	#left-sidebar {
+		position: fixed;
+		left: 10px;
+		top: 10px;
+		width: 200px;
+		text-align: left;
+		overflow: auto;
+	}
+	#right-sidebar {
+		position: fixed;
+		right: 10px;
+		top: 10px;
+		width: 200px;
+		text-align: center;
+	}
+	.shrink-box {
+		background-color: gray;
+		border: 3px gray outset;
+		border-radius: 20px;
+		padding-top: 8px;
+		padding-bottom: 8px;
+		padding-left: 12px;
+		padding-right: 12px;
+		display: inline-block;
 	}
 	#port-config {
-		margin: auto;
-		border-spacing: 0;
+		margin: 10px auto;
 	}
 	.port-config-cell {
 		width: 175px;
 		height: 70px;
-		text-align: center;
 		vertical-align: top;
 		background-color: gray;
 		border: 3px gray inset;
-		/*border-radius: 50%;*/
 		border-bottom-right-radius: 50% 20px;
 		border-top-right-radius: 50% 20px;
 		border-bottom-left-radius: 50% 20px;
 		border-top-left-radius: 50% 20px;
 	}
-	#code-area {
-		text-align: center;
-	}
 	/* Code blocks */
-	.group-container {
-		border-spacing: 0;
-		margin: 10px auto;
-	}
 	.group-container td {
 		width: 200px;
 		height: 100px;
 		vertical-align: top;
 		border: 3px outset;
 	}
-	.trigger-cell {
+	.input-cell {
 		background-color: gray;
 		border-bottom-left-radius: 20px 50px;
 		border-top-left-radius: 20px 50px;
 	}
-	.action-cell {
+	.output-cell {
 		background-color: gray;
 		border-bottom-right-radius: 20px 50px;
 		border-top-right-radius: 20px 50px;
@@ -66,59 +90,78 @@
 	.invisible {
 		visibility: hidden;
 	}
+	.edp-arrow {
+		position: absolute;
+		margin-left: -7px;
+		margin-top: 38px;
+		border-left: 12px solid black;
+		border-top: 12px solid transparent;
+		border-bottom: 12px solid transparent;
+		height: 0;
+		width: 0;
+	}
+	.table-label td {
+		width: 200px;
+	}
 	</style>
 	<!-- Get AngularJS from Google CDN -->
 	<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
 </head>
 
 <body ng-app="myApp" ng-controller="myCtrl">
-	<table id="port-config">
-		<tr>
-			<td ng-repeat="x in inputPorts" class="port-config-cell" ng-style="{background:channelColors[portConfig[x]],borderColor:channelColors[portConfig[x]]}">
-				{{x}}<br/>
-				<select ng-model="portConfig[x]" ng-options="y for y in sensors"></select>
-			</td>
-		</tr>
-		<tr>
-			<td ng-repeat="x in outputPorts" class="port-config-cell" ng-style="{background:channelColors[portConfig[x]],borderColor:channelColors[portConfig[x]]}">
-				{{x}}<br/>
-				<select ng-model="portConfig[x]" ng-options="y for y in motors"></select>
-			</td>
-		</tr>
-	</table>
+	<div id="left-sidebar" class="shrink-box">
+		<h2>What is This?</h2><br/>
+		<p>
+			This prototype demonstrates one possible way to configure the code blocks.
+		</p><br/>
+		<p>
+			Every block belongs to a <em>channel</em>, which is something like "Port 1 Touch Sensor."
+		</p><br/>
+		<p>
+			Every block has a <em>mode</em>, which determines what other <em>settings</em> are available. For now, these can be seen as title-text on mouseover.
+		</p><br/>
+		<p>
+			For now, there is no way to directly add or remove code blocks in this prototype. The <em>Import Program</em> button can be used to import a JSON string representing the code.
+		</p>
+	</div>
+	<div id="right-sidebar" class="shrink-box">
+		<h2>Import/Export</h2><br/>
+		<button ng-click="showCode()">Show Code</button><br/>
+		<button ng-click="importProgram()">Import Program</button>
+	</div>
+	<div id="port-config" class="shrink-box">
+		<h2 class="column-label">EV3 Ports</h2>
+		<table>
+			<tr>
+				<td ng-repeat="x in inputPorts" class="port-config-cell" ng-style="{background:channelColors[portConfig[x]]}">
+					{{x}}<br/>
+					<select ng-model="portConfig[x]" ng-options="y for y in sensors"></select>
+				</td>
+			</tr>
+			<tr>
+				<td ng-repeat="x in outputPorts" class="port-config-cell" ng-style="{background:channelColors[portConfig[x]]}">
+					{{x}}<br/>
+					<select ng-model="portConfig[x]" ng-options="y for y in motors"></select>
+				</td>
+			</tr>
+		</table>
+	</div>
 	<div id="code-area">
-		<button ng-click="getJSON()">Show Code</button>
-		<button ng-click="loadProgram()">Load Program</button>
+		<table class="table-label">
+			<tr>
+				<td><h2 class="shrink-box">WHEN</h2></td>
+				<td><h2 class="shrink-box">THEN</h2></td>
+			</tr>
+		</table>
 
 		<table ng-repeat="trigger in triggers" class="group-container">
 			<tr>
-				<!-- <td edp-cell cell="trigger" type="'trigger'" channel-colors="channelColors" port-config="portConfig" channel-modes="channelModes"></td> -->
-				<td class="trigger-cell" rowspan="9999" ng-style="{background:channelColors[trigger.port ? portConfig[trigger.port] : trigger.channel],borderColor:channelColors[trigger.port ? portConfig[trigger.port] : trigger.channel]}">
-					{{trigger.port ? 'Port ' + trigger.port + ' ' + portConfig[trigger.port] : trigger.channel}}<br/>
-					<select ng-model="trigger.mode" ng-options="mode as mode for (mode, options) in channelModes[trigger.port ? portConfig[trigger.port] : trigger.channel].input"></select>
-					Settings:
-					<span ng-repeat="(setting, details) in channelModes[trigger.port ? portConfig[trigger.port] : trigger.channel].input[trigger.mode]">
-						<select ng-if="details.type === 'selectable'" ng-model="trigger.settings[setting]" ng-options="option for option in details.options"></select>
-						<input ng-if="details.type === 'number'" ng-model="trigger.settings[setting]" type="number"></input>
-						<input ng-if="details.type === 'text'" ng-model="trigger.settings[setting]" type="text" size="15"></input>
-					</span>
-				</td>
+				<td edp-cell data="trigger" type="'input'" channel-colors="channelColors" port-config="portConfig" channel-modes="channelModes"></td>
 				<td ng-if="trigger.actions.length === 0" class="invisible action-cell"></td>
 			</tr>
 			<tr ng-if="trigger.actions.length > 0" ng-repeat="action in trigger.actions">
-				<td class="action-cell" ng-style="{background:channelColors[action.port ? portConfig[action.port] : action.channel],borderColor:channelColors[action.port ? portConfig[action.port] : action.channel]}">
-					{{action.port ? 'Port ' + action.port + ' ' + portConfig[action.port] : action.channel}}<br/>
-					<select ng-model="action.mode" ng-options="mode as mode for (mode, options) in channelModes[action.port ? portConfig[action.port] : action.channel].output"></select>
-					Settings:
-					<span ng-repeat="(setting, details) in channelModes[action.port ? portConfig[action.port] : action.channel].output[action.mode]">
-						<!-- selectable lists -->
-						<select ng-if="details.type === 'selectable'" ng-model="action.settings[setting]" ng-options="option for option in details.options"></select>
-						<!-- numerical input -->
-						<input ng-if="details.type === 'number'" ng-model="action.settings[setting]" type="number"></input>
-						<!-- text -->
-						<input ng-if="details.type === 'text'" ng-model="action.settings[setting]" type="text" size="15"></input>
-					</span>
-				</td>
+				<td edp-cell data="action" type="'output'" channel-colors="channelColors" port-config="portConfig" channel-modes="channelModes"></td>
+				
 			</tr>
 		</table>
 	</div>
@@ -138,16 +181,21 @@
 			},
 			link: function (scope, iElem, iAttr) {
 				iElem.attr("class", scope.cellType + "-cell");
-				if (scope.cellType == 'trigger') {
+				if (scope.cellType == 'input') {
 					iElem.attr("rowspan", 9999);
 				}
-				console.log(scope);
-				// Substitute for ngStyle directive, which cannot be easily added as a sibling directive
+				// Substitute for ngStyle directive, which cannot be easily added as a sibling to a custom directive
 				scope.$watch('cellData', function (newVal, oldVal) {
-					// TODO: only runs the first time!
-					console.log("changed!");
 					var color = scope.channelColors[newVal.channel ? newVal.channel : scope.portConfig[newVal.port]];
 					iElem.css('background-color', color);
+					iElem.css('border-color', color);
+				}, true);
+				scope.$watch('portConfig', function (newVal, oldVal) {
+					if (!scope.cellData.channel) {
+						var color = scope.channelColors[newVal[scope.cellData.port]]
+						iElem.css('background-color', color);
+						iElem.css('border-color', color);
+					}
 				}, true);
 			}
 		};
@@ -703,7 +751,7 @@
 		// Gets the current code mode and config data as a single JSON object
 		// Alerts the user of the code, which can be sleected for copy-pasting
 		// TODO: rename, change to pass program directly to interpreter/brick
-		$scope.getJSON = function () {
+		$scope.showCode = function () {
 			alert(angular.toJson({
 				portConfig: $scope.portConfig,
 				triggers: $scope.triggers
@@ -711,7 +759,7 @@
 		};
 
 		// Opens a prompt into which code can be pasted
-		$scope.loadProgram = function () {
+		$scope.importProgram = function () {
 			var data = JSON.parse(prompt("Enter program data (JSON):"));
 			$scope.portConfig = data.portConfig;
 			$scope.triggers = data.triggers;
