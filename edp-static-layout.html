@@ -178,25 +178,25 @@
 	app.service("edpEv3Constants", function () {
 		// EV3 data
 		// These are used only in the port config panel, and probably shouldn't be in the root scope
-		this.inputPorts = [
+		this.EV3_INPUT_PORTS = [
 			"1", "2", "3", "4"
 		];
-		this.outputPorts = [
+		this.EV3_OUTPUT_PORTS = [
 			"A", "B", "C", "D"
 		];
-		this.sensors = [
+		this.EV3_SENSORS = [
 			"ev3TouchSensor",
 			"ev3ColorSensor",
 			"ev3GyroSensor",
 			"ev3UltrasonicSensor",
 			undefined
 		];
-		this.motors = [
+		this.EV3_MOTORS = [
 			"ev3LargeMotor",
 			"ev3MediumMotor",
 			undefined
 		];
-		this.builtins = [
+		this.EV3_BUILTINS = [
 			"program",
 			"ev3BrickButton",
 			"ev3BrickLight",
@@ -204,7 +204,7 @@
 		];
 
 
-		this.channelNames = {
+		this.EV3_CHANNEL_NAMES = {
 			undefined: "None",
 			ev3TouchSensor: "Touch Sensor",
 			ev3UltrasonicSensor: "Ultrasonic Sensor",
@@ -220,17 +220,17 @@
 		};
 
 		// Channel colors are applied to all blocks using that channel
-		this.channelColors = {
+		this.EV3_CHANNEL_COLORS = {
 			undefined: "gray",
 			ev3TouchSensor: "forestgreen",
 			ev3UltrasonicSensor: "darkviolet",
 			ev3GyroSensor: "magenta",
-			ev3ColorSensor: "turquoise",
+			ev3ColorSensor: "cyan",
 			ev3LargeMotor: "crimson",
 			ev3MediumMotor: "orangered",
 			ev3InfraredSensor: "maroon",
 			ev3BrickButton: "yellow",
-			ev3BrickLight: "darkslateblue",
+			ev3BrickLight: "skyblue",
 			ev3BrickSound: "violet",
 			program: "lightgray"
 		};
@@ -239,7 +239,7 @@
 		// Settings options, sorted by peripheral and mode
 		// Used to populate the mode and setting data for code blocks.
 		// Every block must have a mode, which determines which settings, if any, are available
-		this.channelModes = {
+		this.EV3_CHANNEL_MODES = {
 			ev3TouchSensor: {
 				input: {
 					press: {},
@@ -557,21 +557,21 @@
 				}
 				// Substitute for ngStyle directive, which cannot be easily added as a sibling to a custom directive
 				scope.$watch('cellData', function (newVal, oldVal) {
-					var color = edpEv3Constants.channelColors[newVal.channel ? newVal.channel : scope.portConfig[newVal.port]];
+					var color = edpEv3Constants.EV3_CHANNEL_COLORS[newVal.channel ? newVal.channel : scope.portConfig[newVal.port]];
 					iElem.css('background-color', color);
 					iElem.css('border-color', color);
 				}, true);
 				scope.$watch('portConfig', function (newVal, oldVal) {
 					if (!scope.cellData.channel) {
-						var color = edpEv3Constants.channelColors[newVal[scope.cellData.port]]
+						var color = edpEv3Constants.EV3_CHANNEL_COLORS[newVal[scope.cellData.port]]
 						iElem.css('background-color', color);
 						iElem.css('border-color', color);
 					}
 				}, true);
 
-				scope.channelColors = edpEv3Constants.channelColors;
-				scope.channelNames = edpEv3Constants.channelNames;
-				scope.channelModes = edpEv3Constants.channelModes;
+				scope.channelColors = edpEv3Constants.EV3_CHANNEL_COLORS;
+				scope.channelNames = edpEv3Constants.EV3_CHANNEL_NAMES;
+				scope.channelModes = edpEv3Constants.EV3_CHANNEL_MODES;
 			},
 		};
 	}]);
@@ -787,15 +787,15 @@
 			}
 		];
 
-		// // EV3 data
-		$scope.inputPorts    = edpEv3Constants.inputPorts;
-		$scope.outputPorts   = edpEv3Constants.outputPorts;
-		$scope.sensors       = edpEv3Constants.sensors;
-		$scope.motors        = edpEv3Constants.motors;
-		$scope.builtins      = edpEv3Constants.builtins;
-		$scope.channelModes  = edpEv3Constants.channelModes;
-		$scope.channelColors = edpEv3Constants.channelColors;
-		$scope.channelNames  = edpEv3Constants.channelNames;
+		// EV3 data
+		$scope.inputPorts    = edpEv3Constants.EV3_INPUT_PORTS;
+		$scope.outputPorts   = edpEv3Constants.EV3_OUTPUT_PORTS;
+		$scope.sensors       = edpEv3Constants.EV3_SENSORS;
+		$scope.motors        = edpEv3Constants.EV3_MOTORS;
+		$scope.builtins      = edpEv3Constants.EV3_BUILTINS;
+		$scope.channelModes  = edpEv3Constants.EV3_CHANNEL_MODES;
+		$scope.channelColors = edpEv3Constants.EV3_CHANNEL_COLORS;
+		$scope.channelNames  = edpEv3Constants.EV3_CHANNEL_NAMES;
 
 		// The code as JSON. Represented in the interface in a textarea.
 		// Updated to match the model whenever a button is pressed
