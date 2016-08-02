@@ -1,4 +1,3 @@
-
 var startTime = 0;
 
 //set up and send a CORS HTTP POST request
@@ -41,23 +40,23 @@ function makeCorsRequest(url, data, index, isStart) {
 		else if (response.value == "none") { // response value for successful set instruction.
 			document.getElementById("response_log").innerHTML = JSON.stringify(response); // log response in the response_log div
 		}
-		else if (response.value == 'set complete') {
+		else if (response.value == 'successful set') {
 			//console.log("\t\tcallbackFCN://\tSET response received");
 			document.getElementById("response_log").innerHTML = JSON.stringify(response); // log response in the response_log div
 		}
-		else if (response.value != 'set complete' && response.httpCode == 200){ // if valid data and not the response to a 'set' instruction, it must be a 'get' instruction
+		else if (response.value != 'success set' && response.httpCode == 200){ // if valid data and not the response to a 'set' instruction, it must be a 'get' instruction
 			//console.log("\t\tcallback FCN://\tGET response: " + response.value +" received with code: " + response.httpCode);
 			document.getElementById("response_log").innerHTML = JSON.stringify(response);// log response in the response_log div
 
 			if (firstIter) { // if first time contacting EV3, just add the requested value to lastValues object
-				modelParse.lastValues[modelParse.trigger_list[triggerIndex].port] = response.value; // lastValues object is indexed by port name.
-				//console.log(modelParse.lastValues[modelParse.trigger_list[triggerIndex].port])
+				modelParse.lastValues[modelParse.triggerList[triggerIndex].channel] = response.value; // lastValues object is indexed by port name.
+				//console.log(modelParse.lastValues[modelParse.triggerList[triggerIndex].port])
 			} 
-			else if (modelParse.is_state_change(response.value, modelParse.trigger_list[triggerIndex], modelParse.lastValues[modelParse.trigger_list[triggerIndex].port])) {
+			else if (modelParse.is_state_change(response.value, modelParse.triggerList[triggerIndex], modelParse.lastValues[modelParse.triggerList[triggerIndex].port])) {
 				// if not first time contacting the EV3, check if the value has broken the designated threshold
 
-				modelParse.lastValues[modelParse.trigger_list[triggerIndex].port] = response.value; // if a state change occurs, change the last value to be the current value.
-				modelParse.send_set(modelParse.config, modelParse.trigger_list[triggerIndex].actions); // loop through the outputs for that state change and send set requests for all of them
+				modelParse.lastValues[modelParse.triggerList[triggerIndex].port] = response.value; // if a state change occurs, change the last value to be the current value.
+				modelParse.send_set(modelParse.triggerList[triggerIndex].actions); // loop through the outputs for that state change and send set requests for all of them
 
 			}
 			else { // if no state change detected, do nothing

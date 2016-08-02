@@ -13,9 +13,10 @@
 //
 var modelParse = {
 	url: "http://130.64.94.159:5000", // storage variable for Juliana's EV3 (running Linux server) that we are using for testing.
+	url2: "http://130.64.95.192:5000",
 	lastValues: {}, // object that will store the last value of each trigger input
 	config: {}, // object for storing the port configuration info
-	trigger_list: [], // array of trigger data
+	triggerList: [], // array of trigger data
 	delayedLoop: {}, // object holding the trigger check loop, assigning it to an object allows the loop to be exited at will (think: a stop button in the interface that can abort the current code)
 
 	// parse_data()
@@ -33,17 +34,27 @@ var modelParse = {
 		console.log("parse_data Fcn://\tJSON parsed to variable 'data'");
 		var raw_config = data.portConfig;
 		//for (var d = 0; d < data.triggers.length; d++) {};
-		this.trigger_list = data.triggers;
+		this.triggerList = data.triggers;
 		for (portID in data.portConfig) { // truncate portConfig to only contain assigned ports
 			if (data.portConfig[portID] != "None") {
 				this.config[portID] = data.portConfig[portID];
 			}
 		}
 		//console.log("parse_data Fcn://\tport config truncated");
-		var trigger_len = this.trigger_list.length;
+		var trigger_len = this.triggerList.length;
 		// preset all the old values (so we can detect state changes!)
 		for(var i = 0; i < trigger_len; i++) {
-			this.send_get(this.config[this.trigger_list[i].port], this.trigger_list[i], i, true);
+			if (!this.triggerList[i].channel) {
+				this.triggerList[i].channel = this.config[this.triggerList[i].port];
+			}
+			if (this.triggerList[i].actions) {
+				for (var numActs = 0; numActs < this.triggerList[i].actions.length; numActs++){
+					if (!this.triggerList[i].actions[numActs].channel) {
+						this.triggerList[i].actions[numActs].channel = this.config[this.actions[numActs].port];
+					}
+				}
+			}
+			this.send_get(this.triggerList[i], i, true);
 		}
 		//console.log("parse_data Fcn://\tstart values for all triggers set");
 		var j = 0;
@@ -55,8 +66,8 @@ var modelParse = {
 
 				if(j < trigger_len) {
 				 	//console.log("parse_data Fcn://\t about to send get for trigger #: " + j);
-					modelParse.send_get(modelParse.config[modelParse.trigger_list[j].port], modelParse.trigger_list[j], j, false);
-					console.log("parse_data Fcn://\tget sent for peripheral #: " + j + " type: " + modelParse.config[modelParse.trigger_list[j].port]);
+					modelParse.send_get(modelParse.triggerList[j], j, false);
+					console.log("parse_data Fcn://\tget sent for peripheral #: " + j + " type: " + modelParse.triggerList[j].channel);
 					j++;
 				} else {
 					j = 0;
@@ -73,10 +84,10 @@ var modelParse = {
 	//			-
 	handleStop: function () { // not currently working.
 			// stop all EV3 motors
-			makeCorsRequest(modelParse.url,'{"status":"set","sm_type":"large motor","port":"outA","info":"stop","value":"break"}', 0, false);
-			makeCorsRequest(modelParse.url,'{"status":"set","sm_type":"large motor","port":"outB","info":"stop","value":"break"}', 0, false);
-			makeCorsRequest(modelParse.url,'{"status":"set","sm_type":"large motor","port":"outC","info":"stop","value":"break"}', 0, false);
-			makeCorsRequest(modelParse.url,'{"status":"set","sm_type":"large motor","port":"outD","info":"stop","value":"break"}', 0, false);
+			makeCorsRequest(modelParse.url,'{"status":"set","io_type":"large motor","port":"outA","info":"stop","value":"brake"}', 0, false);
+			makeCorsRequest(modelParse.url,'{"status":"set","io_type":"large motor","port":"outB","info":"stop","value":"brake"}', 0, false);
+			makeCorsRequest(modelParse.url,'{"status":"set","io_type":"large motor","port":"outC","info":"stop","value":"brake"}', 0, false);
+			makeCorsRequest(modelParse.url,'{"status":"set","io_type":"large motor","port":"outD","info":"stop","value":"brake"}', 0, false);
 			
 			 // stop trigger scanning loop
 			clearInterval(delayedLoop);
@@ -92,49 +103,49 @@ var modelParse = {
 	//			-Consider switching to Javascript dictionary mapping (like the ones used for port and sensor name parsing below)
 	//			-Implement state change detection for all GrovePI inputs
 	//
-	is_state_change: function(response, this_trigger, lastVal) {
-		if ((this_trigger.mode == "press_in") && (lastVal != response) && (response == 1)) { // if current button state is different from last state and is now pressed
+	is_state_change: function(response, thisTrigger, lastVal) {
+		if ((thisTrigger.mode == "press") && (lastVal != response) && (response == 1)) { // if current button state is different from last state and is now pressed
 			console.log("is_state_change Fcn://\t button press state change detected");
 			return true;
 		}
-		else if ((this_trigger.mode == "release") && (lastVal != response) && (response == 0)) { // if current button state is different from last state and is now released
+		else if ((thisTrigger.mode == "release") && (lastVal != response) && (response == 0)) { // if current button state is different from last state and is now released
 			console.log("is_state_change Fcn://\t button release state change detected");
 			return true;
 		}
-		else if ((this_trigger.mode == "enter_range") && (lastVal > this_trigger.threshold) && (response <= this_trigger.threshold)) { // Ultrasonic sensor implementation
+		else if ((thisTrigger.mode == "switchColor") && (thisTrigger.settings.transitionType == "to") && (lastVal != response) && (response == thisTrigger.settings.color) {
 			return true;
 		}
-		else if ((this_trigger.mode == "exit_range") && (lastVal < this_trigger.threshold) && (response >= this_trigger.threshold)) { // Ultrasonic sensor implementation
+		else if ((thisTrigger.mode == "switchColor") && (thisTrigger.settings.transitionType == "from") && (lastVal == response) && (response != thisTrigger.settings.color) {
 			return true;
 		}
-		else if ((this_trigger.mode == "exit_range") && (lastVal < this_trigger.threshold) && (response >= this_trigger.threshold)) { // Ultrasonic sensor implementation
+		else if ((thisTrigger.mode == "countExceeds") && (lastVal < thisTrigger.settings.threshold) && (response >= thisTrigger.settings.threshold)) {
 			return true;
 		}
-		else if ((this_trigger.mode == "position_passes") && (this_trigger.comparisonType == "<") && (lastVal > this_trigger.threshold) && (response <= this_trigger.threshold)) { // Ultrasonic sensor implementation
-			// "degrees" or "rotations"
-			return true; // do we need to differentiate for different units or will juliana send them back in the right units??????????????????????????
+		else if ((this.detect_comparison(thisTrigger.settings.comparisonType) == "passes above") && (lastVal < thisTrigger.settings.threshold) && (response >= thisTrigger.settings.threshold)) {
+			return true;
 		}
-		else if ((this_trigger.mode == "position_passes") && (this_trigger.comparisonType == ">") && (lastVal < this_trigger.threshold) && (response >= this_trigger.threshold)) { // Ultrasonic sensor implementation
-			// "degrees" or "rotations"
-			return true;// do we need to differentiate for different units or will juliana send them back in the right units??????????????????????????
-		}
-		else if ((this_trigger.mode == "rate_passes") && (this_trigger.comparisonType == "<") && (lastVal > this_trigger.threshold) && (response <= this_trigger.threshold)) { // Ultrasonic sensor implementation
-			// "deg/sec" or "rot/sec"
-			return true; // do we need to differentiate for different units or will juliana send them back in the right units??????????????????????????
-		}
-		else if ((this_trigger.mode == "rate_passes") && (this_trigger.comparisonType == ">") && (lastVal < this_trigger.threshold) && (response >= this_trigger.threshold)) { // Ultrasonic sensor implementation
-			// "deg/sec" or "rot/sec"
-			return true;// do we need to differentiate for different units or will juliana send them back in the right units??????????????????????????
+		else if ((this.detect_comparison(thisTrigger.settings.comparisonType) == "passes below") && (lastVal > thisTrigger.threshold) && (response <= thisTrigger.threshold)) {
+			return true;
 		}
 
 		/* FORMAT:
-		else if((CONFIRM THE MODE) && (CHECK THAT LAST VALUE DID NOT BREAK THE THRESHOLD) && (CHECK THAT IT BREAKS THE THRESHOLD)) {
+		else if((CONFIRM COMPARISON TYPE) && (CHECK THAT LAST VALUE DID NOT BREAK THE THRESHOLD) && (CHECK THAT IT BREAKS THE THRESHOLD)) {
 			return true;
 		}
 		*/
 		else { // if no state change detected
 			return false;
 		}
+	},
+
+	detect_comparison: function(comparison) {
+		if (comparison == "above" || comparison == "exit" || "countExceeds") {
+			return "passes above";
+		}
+		else if (comparison == "below" || comparison == "enter") {
+			return "passes below";
+		}
+		else if (comparison == "") {}
 	},
 
 	// send_get()
@@ -148,19 +159,19 @@ var modelParse = {
 	//				(we probably need to store the URL for each connected device with its
 	//					corresponding triggers so we can dynamically handle multiple devices)
 	//
-	send_get: function(sensorName,trig,index,isFirst) {
+	send_get: function(trig,index,isFirst) {
 		/*SEND A REQUEST WITH:*/
 		var get_str = '{"status":"';
 			get_str += 'get';
-			get_str += '","sm_type":"';
-			get_str += this.parse_name(sensorName);
+			get_str += '","io_type":"';
+			get_str += this.parse_name(trig.channel);
 			get_str += '","port":"';
 			get_str += this.parse_port(trig.port);
 			get_str += '","info":"';
-			get_str += this.trigger_settings(sensorName,trig.settings);
-			get_str += '","value":';
-			get_str += -1;// dummy value to make this the right number of arguments (EV3 doesn't use value field for "get"s)	
-			get_str += '}';
+			get_str += this.parse_identifier(trig.mode);
+			get_str += '","mode":"';
+			get_str += this.get_trigger_units(trig);// dummy value to make this the right number of arguments (EV3 doesn't use value field for "get"s)	
+			get_str += '"}';
 
 			/*****************PSEUDOCODE, NOT IMPLEMENTED YET!**********************
 			// var destinationURL = trig.deviceURL; // maybe adding a field to each trigger encoding the URL of the device it goes with could be used to allow multi-device handling.
@@ -181,14 +192,14 @@ var modelParse = {
 	//				(Same as with the 'send_get()' function, we probably need to store the URL for each connected device with its
 	//					corresponding actions so we can dynamically handle multiple devices)
 	//
-	send_set: function(full_config,action_arr) {
+	send_set: function(action_arr) {
 		var len = action_arr.length;
 		for (var k = 0; k < len; k++) {
 			/*SEND A REQUEST WITH:*/
 			var set_str = '{"status":"';
 			set_str += 'set';
-			set_str += '","sm_type":"';
-			set_str += this.parse_name(full_config[action_arr[k].port]);
+			set_str += '","io_type":"';
+			set_str += this.parse_name(action_arr[k].channel]);
 			set_str += '","port":"';
 			set_str += this.parse_port(action_arr[k].port);
 			set_str += '","info":"';
@@ -209,22 +220,55 @@ var modelParse = {
 		}
 	},
 
-	// trigger_setting()
+	// parse_identifier()
 	//		Function for inserting trigger setting keys for 'get' instructions.
-	//		For 'get' instructions to the EV3's sensors, and only the sensors,
-	//			the info field must just be 'value'.  However, other peripherals
-	//			may reqire different 'info' arguments. 
+	//		For 'get' instructions to some EV3 sensors, the info field may just be 'value'.
+	//			However, other peripherals may reqire different 'info' arguments. 
 	//		TODO:
 	//			-Add compatibility for reading the EV3 motor's encoders/ reading their rotation data
 	//			-Add compatibility with the GrovePI
-	//			-Consider switching to Javascript dictionary mapping (like the ones used for port and sensor name parsing below)
 	//
-	trigger_settings: function(inputName, setting) {
-		if (inputName != "Large Motor" && inputName != "Medium Motor") {
-			return "value"; // "value" is used for all EV3 sensors
+	parse_identifier: function(identifier) {
+		return parseIdentifierTranslations[identifier];
+	},
+
+	// Dictionary object for parsing peripheral identifiers to an EV3-recognizable format.
+	//	TODO:
+	//		-Add all GrovePI peripherals.
+	//
+	parseIdentifierTranslations: {
+		"press":"value",
+		"release":"value",
+		"distancePasses":"value",
+		//"detectColor":"color"
+		"reflectedLightPasses":"value",
+		"ambientLightPasses":"value",
+		//"rgbValuePasses":"value",
+		"positionPasses":"angle",
+		"ratePasses":"rate",
+
+		"press":"value",
+		"press":"value",
+		"press":"value",
+	},
+	
+
+	// get_trigger_units()
+	//		Returns the units field of the input trigger object
+	//		For peripherals that measure non-boolean values, return the desired units.
+	//			otherwise, we request the raw peripheral value.
+	//		TODO:
+	//			-Add compatibility with GrovePI
+	//
+	get_trigger_units: function(trigger){
+		if (trigger.channel == "Large Motor" || trigger.channel == "Medium Motor" || trigger.channel == "Ultrasonic Sensor" || trigger.channel == "Gyro Sensor") {
+			return trigger.settings.units;
+		}
+		else if (trigger.channel == "Brick Button") {
+			return trigger.settings.button;
 		}
 		else {
-			return "value"; // change this to whatever the motors need to run
+			return "raw";
 		}
 	},
 
@@ -241,30 +285,34 @@ var modelParse = {
 		"1":"in1",
 		"2":"in2",
 		"3":"in3",
-		"4":"in4"
+		"4":"in4",
+		"Brick":"brick"
 	},
 
 	// parse_port()
 	//		Function uses the 'parsePortTranslations' object to map the EV3 port names.
 	//
 	parse_port: function(portName) {
-		return this.parsePortTranslations[portName];
+		if (!portName) {
+			return this.parsePortTranslations["Brick"];
+		}
+		else {
+			return this.parsePortTranslations[portName];
+		}
 	},
 
 	// Dictionary object for parsing peripheral names to an EV3-recognizable format.
 	//	TODO:
-	//		-Add the rest of the EV3 peripherals (ultrasonic, color, gyro, brick sound, brick light)
 	//		-Add all GrovePI peripherals.
 	//
 	parseNameTranslations: {
 		"Touch Sensor":"touch",
-		"Ultrasonic Sensor":"", // fill these in!!
-		"Color Sensor":"",// fill these in!!
-		"Gyro Sensor":"",// fill these in!!
-		"Brick Button":"",// fill these in!!
-		"Brick Light":"",// fill these in!!
-		"Brick Sound":"",// fill these in!!
-
+		"Ultrasonic Sensor":"ultrasonic", 
+		"Color Sensor":"color",
+		"Gyro Sensor":"gyro",
+		"Brick Button":"nav button",
+		"Brick Light":"led",
+		"Brick Sound":"sound",
 		"Large Motor":"large motor",
 		"Medium Motor":"medium motor"
 	},
@@ -272,8 +320,8 @@ var modelParse = {
 	// parse_name()
 	//		Function uses the 'parseNameTranslations' object to map the EV3 peripheral names.
 	//
-	parse_name: function(sm_type) {
-		return this.parseNameTranslations[sm_type];
+	parse_name: function(io_type) {
+		return this.parseNameTranslations[io_type];
 	},
 
 	// set_act_info()
@@ -284,6 +332,7 @@ var modelParse = {
 	//			-Consider switching to Javascript dictionary mapping (like the ones used for port and sensor name parsing above)
 	//			
 	set_act_info: function(mode) {
+		if (mode == ""){}
 		if (mode == "start_fwd" || mode == "start_bkwd") {
 			return "run_forever";
 		}
