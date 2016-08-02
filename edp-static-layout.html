@@ -140,15 +140,15 @@
 		<h2 class="column-label">EV3 Ports</h2>
 		<table>
 			<tr>
-				<td ng-repeat="x in inputPorts" class="port-config-cell" ng-style="{background:channelColors[portConfig[x]]}">
-					{{x}}<br/>
-					<select ng-model="portConfig[x]" ng-options="y for y in sensors"></select>
+				<td ng-repeat="port in inputPorts" class="port-config-cell" ng-style="{background:channelColors[portConfig[port]]}">
+					{{port}}<br/>
+					<select ng-model="portConfig[port]" ng-options="sensor as channelNames[sensor] for sensor in sensors"></select>
 				</td>
 			</tr>
 			<tr>
-				<td ng-repeat="x in outputPorts" class="port-config-cell" ng-style="{background:channelColors[portConfig[x]]}">
-					{{x}}<br/>
-					<select ng-model="portConfig[x]" ng-options="y for y in motors"></select>
+				<td ng-repeat="port in outputPorts" class="port-config-cell" ng-style="{background:channelColors[portConfig[port]]}">
+					{{port}}<br/>
+					<select ng-model="portConfig[port]" ng-options="motor as channelNames[motor] for motor in motors"></select>
 				</td>
 			</tr>
 		</table>
@@ -163,11 +163,11 @@
 
 		<table ng-repeat="trigger in triggers" class="group-container">
 			<tr>
-				<td edp-cell data="trigger" type="'input'" channel-colors="channelColors" port-config="portConfig" channel-modes="channelModes"></td>
+				<td edp-cell data="trigger" type="'input'" port-config="portConfig"></td>
 				<td ng-if="trigger.actions.length === 0" class="invisible action-cell"></td>
 			</tr>
 			<tr ng-if="trigger.actions.length > 0" ng-repeat="action in trigger.actions">
-				<td edp-cell data="action" type="'output'" channel-colors="channelColors" port-config="portConfig" channel-modes="channelModes"></td>
+				<td edp-cell data="action" type="'output'" port-config="portConfig"></td>
 				
 			</tr>
 		</table>
@@ -175,16 +175,380 @@
 
 	<script>
 	var app = angular.module('myApp', []);
-	app.directive('edpCell', function() {
+	app.service("edpEv3Constants", function () {
+		// EV3 data
+		// These are used only in the port config panel, and probably shouldn't be in the root scope
+		this.inputPorts = [
+			"1", "2", "3", "4"
+		];
+		this.outputPorts = [
+			"A", "B", "C", "D"
+		];
+		this.sensors = [
+			"ev3TouchSensor",
+			"ev3ColorSensor",
+			"ev3GyroSensor",
+			"ev3UltrasonicSensor",
+			undefined
+		];
+		this.motors = [
+			"ev3LargeMotor",
+			"ev3MediumMotor",
+			undefined
+		];
+		this.builtins = [
+			"program",
+			"ev3BrickButton",
+			"ev3BrickLight",
+			"ev3BrickSound"
+		];
+
+
+		this.channelNames = {
+			undefined: "None",
+			ev3TouchSensor: "Touch Sensor",
+			ev3UltrasonicSensor: "Ultrasonic Sensor",
+			ev3GyroSensor: "Gyro Sensor",
+			ev3ColorSensor: "Color Sensor",
+			ev3LargeMotor: "Large Motor",
+			ev3MediumMotor: "Medium Motor",
+			ev3InfraredSensor: "Infrared Sensor",
+			ev3BrickButton: "Brick Button",
+			ev3BrickLight: "Brick Light",
+			ev3BrickSound: "Brick Sound",
+			program: "Program"
+		};
+
+		// Channel colors are applied to all blocks using that channel
+		this.channelColors = {
+			undefined: "gray",
+			ev3TouchSensor: "forestgreen",
+			ev3UltrasonicSensor: "darkviolet",
+			ev3GyroSensor: "magenta",
+			ev3ColorSensor: "turquoise",
+			ev3LargeMotor: "crimson",
+			ev3MediumMotor: "orangered",
+			ev3InfraredSensor: "maroon",
+			ev3BrickButton: "yellow",
+			ev3BrickLight: "darkslateblue",
+			ev3BrickSound: "violet",
+			program: "lightgray"
+		};
+
+
+		// Settings options, sorted by peripheral and mode
+		// Used to populate the mode and setting data for code blocks.
+		// Every block must have a mode, which determines which settings, if any, are available
+		this.channelModes = {
+			ev3TouchSensor: {
+				input: {
+					press: {},
+					release: {},
+					countExceeds: {
+						threshold: {
+							type: "positiveInteger"
+						}
+					}
+				}
+			},
+			ev3UltrasonicSensor: {
+				input: {
+					distancePasses: {
+						comparisonType: {
+							type: "selectable",
+							options: ["enter", "exit"]
+						},
+						threshold: {
+							type: "positiveDecimal"
+						},
+						units: {
+							type: "selectable",
+							options: ["inches", "centimeters"]
+						}
+					}
+				}
+			},
+			ev3ColorSensor: {
+				input: {
+					switchColor: {
+						transitionType: {
+							type: "selectable",
+							options: ["to", "from"]
+						}
+						color: {
+							type: "selectable",
+							options: ["black", "blue", "green", "yellow", "red", "white", "brown", "none"]
+						}
+					},
+					reflectedLightPasses: {
+						comparisonType: {
+							type: "selectable",
+							options: ["below", "above"]
+						},
+						threshold: {
+							type: "selectable",
+							options: ["dark", "dim", "bright"]
+						}
+					},
+					ambientLightPasses: {
+						comparisonType: {
+							type: "selectable",
+							options: ["below", "above"]
+						},
+						threshold: {
+							type: "selectable",
+							options: ["dark", "dim", "bright"]
+						}
+					},
+					rgbValuePasses: {
+						comparisonType: {
+							type: "selectable",
+							options: ["below", "above"]
+						},
+						threshold: {
+							type: "positiveInteger"
+						},
+						color: {
+							type: "selectable",
+							options: ["red", "green", "blue"]
+						}
+					}
+				}
+			},
+			ev3GyroSensor: {
+				input: {
+					positionPasses: {
+						comparisonType: {
+							type: "selectable",
+							options: ["below", "above"]
+						},
+						threshold: {
+							type: "decimal"
+						},
+						units: {
+							type: "selectable",
+							options: ["degrees", "rotations"]
+						}
+					},
+					ratePasses: {
+						comparisonType: {
+							type: "selectable",
+							options: ["below", "above"]
+						},
+						threshold: {
+							type: "decimal"
+						},
+						units: {
+							type: "selectable",
+							options: ["deg/sec", "rot/sec"]
+						}
+					}
+				}
+			},
+			// Motors
+			ev3LargeMotor: {
+				input: {
+					positionPasses: {
+						comparisonType: {
+							type: "selectable",
+							options: ["below", "above"]
+						},
+						threshold: {
+							type: "decimal"
+						},
+						units: {
+							type: "selectable",
+							options: ["degrees", "rotations"]
+						}
+					},
+					ratePasses: {
+						comparisonType: {
+							type: "selectable",
+							options: ["below", "above"]
+						},
+						threshold: {
+							type: "decimal"
+						},
+						units: {
+							type: "selectable",
+							options: ["deg/sec", "rot/sec"]
+						}
+					}
+				},
+				output: {
+					start: {
+						direction: {
+							type: "selectable",
+							options: ["forward", "backward"]
+						},
+						power: {
+							type: "selectable",
+							options: ["high", "medium", "low"]
+						}
+					},
+					switchDirection: {
+						newPower: {
+							type: "selectable",
+							options: ["remember", "high", "medium", "low"]
+						}
+					},
+					stop: {
+						stopType: {
+							type: "selectable",
+							options: ["coast", "brake"]
+						}
+					},
+					resetEncoders: {}
+				}
+			},
+			ev3MediumMotor: {
+				input: {
+					positionPasses: {
+						comparisonType: {
+							type: "selectable",
+							options: ["below", "above"]
+						},
+						threshold: {
+							type: "decimal"
+						},
+						units: {
+							type: "selectable",
+							options: ["degrees", "rotations"]
+						}
+					},
+					ratePasses: {
+						comparisonType: {
+							type: "selectable",
+							options: ["below", "above"]
+						},
+						threshold: {
+							type: "decimal"
+						},
+						units: {
+							type: "selectable",
+							options: ["deg/sec", "rot/sec"]
+						}
+					}
+				},
+				output: {
+					start: {
+						direction: {
+							type: "selectable",
+							options: ["forward", "backward"]
+						},
+						power: {
+							type: "selectable",
+							options: ["high", "medium", "low"]
+						}
+					},
+					switchDirection: {
+						newPower: {
+							type: "selectable",
+							options: ["remember", "high", "medium", "low"]
+						}
+					},
+					stop: {
+						stopType: {
+							type: "selectable",
+							options: ["coast", "brake"]
+						}
+					},
+					resetEncoders: {}
+				}
+			},
+			// No configuration is required for these channels //
+			ev3BrickButton: {
+				input: {
+					press: {
+						button: {
+							type: "selectable",
+							options: ["up", "down", "left", "right", "enter"]
+						}
+					},
+					release: {
+						button: {
+							type: "selectable",
+							options: ["up", "down", "left", "right", "enter"]
+						}
+					},
+					countExceeds: {
+						button: {
+							type: "selectable",
+							options: ["up", "down", "left", "right", "enter"]
+						},
+						threshold: {
+							type: "positiveInteger"
+						}
+					}
+				}
+			},
+			ev3BrickSound: {
+				output: {
+					playTone: {
+						frequency: {
+							type: "positiveDecimal"
+						},
+						volume: {
+							type: "positiveInteger"
+						},
+						duration: {
+							type: "positiveDecimal"
+						}
+					},
+					playNote: {
+						note: {
+							type: "selectable",
+							options: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+						},
+						octave: {
+							type: "positiveInteger"
+						},
+						volume: {
+							type: "positiveInteger"
+						},
+						duration: {
+							type: "positiveDecimal"
+						}
+					},
+					playFile: {
+						filename: {
+							type: "text"
+						},
+						volume: {
+							type: "positiveInteger"
+						}
+					}
+				}
+			},
+			ev3BrickLight: {
+				output: {
+					lightOn: {
+						color: {
+							type: "selectable",
+							options: ["red", "yellow", "green"]
+						}
+					},
+					lightOff: {}
+				}
+			},
+			program: {
+				input: {
+					programStart: {}
+				},
+				output: {
+					programStop: {}
+				}
+			}
+		};
+	});
+	app.directive('edpCell', ['edpEv3Constants', function(edpEv3Constants) {
 		return {
 			restrict: 'A',
 			templateUrl: 'edp-cell.html',
 			scope: {
 				cellType: '=type',
 				cellData: '=data',
-				channelColors: '=',
-				portConfig: '=',
-				channelModes: '='
+				portConfig: "="
 			},
 			link: function (scope, iElem, iAttr) {
 				iElem.attr("class", scope.cellType + "-cell");
@@ -193,34 +557,38 @@
 				}
 				// Substitute for ngStyle directive, which cannot be easily added as a sibling to a custom directive
 				scope.$watch('cellData', function (newVal, oldVal) {
-					var color = scope.channelColors[newVal.channel ? newVal.channel : scope.portConfig[newVal.port]];
+					var color = edpEv3Constants.channelColors[newVal.channel ? newVal.channel : scope.portConfig[newVal.port]];
 					iElem.css('background-color', color);
 					iElem.css('border-color', color);
 				}, true);
 				scope.$watch('portConfig', function (newVal, oldVal) {
 					if (!scope.cellData.channel) {
-						var color = scope.channelColors[newVal[scope.cellData.port]]
+						var color = edpEv3Constants.channelColors[newVal[scope.cellData.port]]
 						iElem.css('background-color', color);
 						iElem.css('border-color', color);
 					}
 				}, true);
-			}
+
+				scope.channelColors = edpEv3Constants.channelColors;
+				scope.channelNames = edpEv3Constants.channelNames;
+				scope.channelModes = edpEv3Constants.channelModes;
+			},
 		};
-	});
-	app.controller('myCtrl', function($scope) {
+	}]);
+	app.controller('myCtrl', ['$scope', 'edpEv3Constants', function($scope, edpEv3Constants) {
 		// Port Configuration Panel Dats
 		// Set by blocks in port config panel
 		// Accessed by code blocks which refer to ports but don't know the peripherals
 		// Heavily EV3-specifc
 		$scope.portConfig = {
-			'1': "Touch Sensor",
+			'1': "ev3TouchSensor",
 			// '2': "None",
 			// '3': "None",
-			'4': "Color Sensor",
-			'A': "Large Motor",
-			'B': "Large Motor",
+			'4': "ev3ColorSensor",
+			'A': "ev3LargeMotor",
+			'B': "ev3LargeMotor",
 			// 'C': "None",
-			'D': "Medium Motor"
+			'D': "ev3MediumMotor"
 		};
 
 		// Code Model
@@ -229,56 +597,58 @@
 		// The code that is here now is the elephant demo code, which is untested in this form
 		$scope.triggers = [
 			{
-				channel: "Program",
-				mode: "program_start",
+				channel: "program",
+				mode: "programStart",
 				actions: [
 					{
 						port: "B",
-						mode: "reset_encoders"
+						mode: "resetEncoders"
 					},
 					{
 						port: "D",
-						mode: "reset_encoders"
+						mode: "resetEncoders"
 					}
 				]
 			},
 			{
-				channel: "Brick Button",
-				mode: "press_in",
+				channel: "ev3BrickButton",
+				mode: "press",
 				settings: {
-					button: "button_up"
+					button: "up"
 				},
 				actions: [
 					{
 						port: "A",
-						mode: "start_fwd",
+						mode: "start",
 						settings: {
+							direction: "forward",
 							power: "high"
 						}
 					}
 				]
 			},
 			{
-				channel: "Brick Button",
-				mode: "press_in",
+				channel: "ev3BrickButton",
+				mode: "press",
 				settings: {
-					button: "button_down"
+					button: "down"
 				},
 				actions: [
 					{
 						port: "A",
-						mode: "start_bkwd",
+						mode: "start",
 						settings: {
+							direction: "backward",
 							power: "high"
 						}
 					}
 				]
 			},
 			{
-				channel: "Brick Button",
-				mode: "press_in",
+				channel: "ev3BrickButton",
+				mode: "press",
 				settings: {
-					button: "button_center"
+					button: "enter"
 				},
 				actions: [
 					{
@@ -291,16 +661,17 @@
 				]
 			},
 			{
-				channel: "Brick Button",
-				mode: "press_in",
+				channel: "ev3BrickButton",
+				mode: "press",
 				settings: {
-					button: "button_left"
+					button: "left"
 				},
 				actions: [
 					{
 						port: "B",
-						mode: "start_fwd",
+						mode: "start",
 						settings: {
+							direction: "forward",
 							power: "medium"
 						}
 					}
@@ -308,7 +679,7 @@
 			},
 			{
 				port: "1",
-				mode: "press_in",
+				mode: "press",
 				actions: [
 					{
 						port: "B",
@@ -319,8 +690,9 @@
 					},
 					{
 						port: "D",
-						mode: "start_bkwd",
+						mode: "start",
 						settings: {
+							direction: "backward",
 							power: "medium"
 						}
 					}
@@ -328,16 +700,16 @@
 			},
 			{
 				port: "4",
-				mode: "rgb_value_passes",
+				mode: "rgbValuePasses",
 				settings: {
 					color: "red",
 					threshold: 190,
-					comparisonType: ">"
+					comparisonType: "above"
 				},
 				actions: [
 					{
-						channel: "Brick Sound",
-						mode: "play_file",
+						channel: "ev3BrickSound",
+						mode: "playFile",
 						settings: {
 							filename: "elephant_call.rsf",
 							volume: 100
@@ -345,33 +717,35 @@
 					},
 					{
 						port: "B",
-						mode: "start_fwd",
+						mode: "start",
 						settings: {
+							direction: "forward",
 							power: "high"
 						}
 					},
 					{
 						port: "D",
-						mode: "start_bkwd",
+						mode: "start",
 						settings: {
+							direction: "backward",
 							power: "medium"
 						}
 					},
 					{
 						port: "B",
-						mode: "reset_encoders"
+						mode: "resetEncoders"
 					},
 					{
 						port: "D",
-						mode: "reset_encoders"
+						mode: "resetEncoders"
 					}
 				]
 			},
 			{
 				port: "B",
-				mode: "position_passes",
+				mode: "positionPasses",
 				settings: {
-					comparisonType: "<",
+					comparisonType: "below",
 					threshold: -975,
 					units: "degrees"
 				},
@@ -385,15 +759,15 @@
 					},
 					{
 						port: "B",
-						mode: "reset_encoders"
+						mode: "resetEncoders"
 					}
 				]
 			},
 			{
 				port: "D",
-				mode: "position_passes",
+				mode: "positionPasses",
 				settings: {
-					comparisonType: ">",
+					comparisonType: "above",
 					threshold: 770,
 					units: "degrees"
 				},
@@ -407,353 +781,21 @@
 					},
 					{
 						port: "D",
-						mode: "reset_encoders"
-					}
-				]
-			},
-			{
-				channel: "Brick Button",
-				mode: "press_in",
-				settings: {
-					button: "button_back"
-				},
-				actions: [
-					{
-						channel: "Program",
-						mode: "program_stop"
+						mode: "resetEncoders"
 					}
 				]
 			}
 		];
 
-		// EV3 data
-		// These are used only in the port config panel, and probably shouldn't be in the root scope
-		$scope.inputPorts = [
-			"1", "2", "3", "4"
-		];
-		$scope.outputPorts = [
-			"A", "B", "C", "D"
-		];
-		$scope.sensors = [
-			"Touch Sensor", "Color Sensor", "Gyro Sensor", "Ultrasonic Sensor", undefined
-		];
-		$scope.motors = [
-			"Large Motor", "Medium Motor", undefined
-		];
-
-		// Settings options, sorted by peripheral and mode
-		// Used to populate the mode and setting data for code blocks.
-		// Every block must have a mode, which determines which settings, if any, are available
-		$scope.channelModes = {
-			"Touch Sensor": {
-				input: {
-					"press_in": {},
-					"release": {},
-					"count_exceeds": {
-						threshold: {
-							type: "number"
-						}
-					}
-				}
-			},
-			"Ultrasonic Sensor": {
-				input: {
-					"enter_range": {
-						threshold: {
-							type: "number"
-						},
-						units: {
-							type: "selectable",
-							options: ["inches", "centimeters"]
-						}
-					},
-					"exit_range": {
-						threshold: {
-							type: "number"
-						},
-						units: {
-							type: "selectable",
-							options: ["inches", "centimeters"]
-						}
-					}
-				}
-			},
-			"Color Sensor": {
-				input: {
-					"detect_color": {
-						color: {
-							type: "selectable",
-							options: ["black", "blue", "green", "yellow", "red", "white", "brown", "none"]
-						}
-					},
-					"reflected_light_passes": {
-						comparisonType: {
-							type: "selectable",
-							options: ["<", ">"]
-						},
-						threshold: {
-							type: "selectable",
-							options: ["dark", "dim", "bright"]
-						}
-					},
-					"ambient_light_passes": {
-						comparisonType: {
-							type: "selectable",
-							options: ["<", ">"]
-						},
-						threshold: {
-							type: "selectable",
-							options: ["dark", "dim", "bright"]
-						}
-					},
-					"rgb_value_passes": {
-						comparisonType: {
-							type: "selectable",
-							options: ["<", ">"]
-						},
-						threshold: {
-							type: "number"
-						},
-						color: {
-							type: "selectable",
-							options: ["red", "green", "blue"]
-						}
-					}
-				}
-			},
-			"Gyro Sensor": {
-				input: {
-					"position_passes": {
-						comparisonType: {
-							type: "selectable",
-							options: ["<", ">"]
-						},
-						threshold: {
-							type: "number"
-						},
-						units: {
-							type: "selectable",
-							options: ["degrees", "rotations"]
-						}
-					},
-					"rate_passes": {
-						comparisonType: {
-							type: "selectable",
-							options: ["<", ">"]
-						},
-						threshold: {
-							type: "number"
-						},
-						units: {
-							type: "selectable",
-							options: ["deg/sec", "rot/sec"]
-						}
-					}
-				}
-			},
-			// Motors
-			"Large Motor": {
-				input: {
-					"position_passes": {
-						comparisonType: {
-							type: "selectable",
-							options: ["<", ">"]
-						},
-						threshold: {
-							type: "number"
-						},
-						units: {
-							type: "selectable",
-							options: ["degrees", "rotations"]
-						}
-					},
-					"rate_passes": {
-						comparisonType: {
-							type: "selectable",
-							options: ["<", ">"]
-						},
-						threshold: {
-							type: "number"
-						},
-						units: {
-							type: "selectable",
-							options: ["deg/sec", "rot/sec"]
-						}
-					}
-				},
-				output: {
-					"start_fwd": {
-						power: {
-							type: "selectable",
-							options: ["high", "medium", "low"]
-						}
-					},
-					"start_bkwd": {
-						power: {
-							type: "selectable",
-							options: ["high", "medium", "low"]
-						}
-					},
-					"stop": {
-						stopType: {
-							type: "selectable",
-							options: ["coast", "brake"]
-						}
-					},
-					"reset_encoders": {}
-				}
-			},
-			"Medium Motor": {
-				input: {
-					"position_passes": {
-						comparisonType: {
-							type: "selectable",
-							options: ["<", ">"]
-						},
-						threshold: {
-							type: "number"
-						},
-						units: {
-							type: "selectable",
-							options: ["degrees", "rotations"]
-						}
-					},
-					"rate_passes": {
-						comparisonType: {
-							type: "selectable",
-							options: ["<", ">"]
-						},
-						threshold: {
-							type: "number"
-						},
-						units: {
-							type: "selectable",
-							options: ["deg/sec", "rot/sec"]
-						}
-					}
-				},
-				output: {
-					"start_fwd": {
-						power: {
-							type: "selectable",
-							options: ["high", "medium", "low"]
-						}
-					},
-					"start_bkwd": {
-						power: {
-							type: "selectable",
-							options: ["high", "medium", "low"]
-						}
-					},
-					"stop": {
-						stopType: {
-							type: "selectable",
-							options: ["coast", "brake"]
-						}
-					},
-					"reset_encoders": {}
-				}
-			},
-			// No configuration is required for these channels //
-			"Brick Button": {
-				input: {
-					"press_in": {
-						button: {
-							type: "selectable",
-							options: ["button_up", "button_down", "button_left", "button_right", "button_center", "button_back"]
-						}
-					},
-					"release": {
-						button: {
-							type: "selectable",
-							options: ["button_up", "button_down", "button_left", "button_right", "button_center", "button_back"]
-						}
-					},
-					"count_exceeds": {
-						button: {
-							type: "selectable",
-							options: ["button_up", "button_down", "button_left", "button_right", "button_center", "button_back"]
-						},
-						threshold: {
-							type: "number"
-						}
-					}
-				}
-			},
-			"Brick Sound": {
-				output: {
-					"play_tone": {
-						frequency: {
-							type: "number"
-						},
-						volume: {
-							type: "number"
-						},
-						duration: {
-							type: "number"
-						}
-					},
-					"play_note": {
-						note: {
-							type: "selectable",
-							options: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-						},
-						octave: {
-							type: "number"
-						},
-						volume: {
-							type: "number"
-						},
-						duration: {
-							type: "number"
-						}
-					},
-					"play_file": {
-						filename: {
-							type: "text"
-						},
-						volume: {
-							type: "number"
-						}
-					}
-				}
-			},
-			"Brick Light": {
-				output: {
-					"light_on": {
-						color: {
-							type: "selectable",
-							options: ["red", "yellow", "green"]
-						}
-					},
-					"light_off": {}
-				}
-			},
-			"Program": {
-				input: {
-					"program_start": {}
-				},
-				output: {
-					"program_stop": {}
-				}
-			}
-		}
-
-		// Channel colors are applied to all blocks using that channel
-		$scope.channelColors = {
-			undefined: "gray",
-			"Touch Sensor": "forestgreen",
-			"Ultrasonic Sensor": "darkviolet",
-			"Gyro Sensor": "magenta",
-			"Color Sensor": "turquoise",
-			"Large Motor": "crimson",
-			"Medium Motor": "orangered",
-			"Infrared Sensor": "maroon",
-			"Brick Button": "yellow",
-			"Brick Light": "darkslateblue",
-			"Brick Sound": "violet",
-			"Program": "lightgray"
-		};
+		// // EV3 data
+		$scope.inputPorts    = edpEv3Constants.inputPorts;
+		$scope.outputPorts   = edpEv3Constants.outputPorts;
+		$scope.sensors       = edpEv3Constants.sensors;
+		$scope.motors        = edpEv3Constants.motors;
+		$scope.builtins      = edpEv3Constants.builtins;
+		$scope.channelModes  = edpEv3Constants.channelModes;
+		$scope.channelColors = edpEv3Constants.channelColors;
+		$scope.channelNames  = edpEv3Constants.channelNames;
 
 		// The code as JSON. Represented in the interface in a textarea.
 		// Updated to match the model whenever a button is pressed
@@ -776,6 +818,6 @@
 			$scope.triggers = data.triggers;
 		};
 
-	});
+	}]);
 	</script>
 </body>

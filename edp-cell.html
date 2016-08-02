@@ -1,6 +1,6 @@
 <span>
 	<div ng-if="cellType === 'output'" class="edp-arrow"></div>
-	{{cellData.channel ? cellData.channel : 'Port ' + cellData.port + ' ' + portConfig[cellData.port]}}<br/>
+	{{cellData.channel ? channelNames[cellData.channel] : 'Port ' + cellData.port + ' ' + channelNames[portConfig[cellData.port]]}}<br/>
 	<select
 		ng-model="cellData.mode"
 		ng-options="mode as mode for (mode, options) in channelModes[cellData.channel ? cellData.channel : portConfig[cellData.port]][cellType]"
@@ -16,11 +16,34 @@
 		></select>
 		<!-- numerical input -->
 		<input
-			ng-if="details.type === 'number'"
+			ng-if="details.type === 'decimal'"
 			ng-model="cellData.settings[setting]"
 			type="number"
 			step="0.05"
 			title="{{setting}}"
+		></input>
+		<input
+			ng-if="details.type === 'positiveDecimal'"
+			ng-model="cellData.settings[setting]"
+			type="number"
+			step="0.05"
+			title="{{setting}}"
+			min="0"
+		></input>
+		<input
+			ng-if="details.type === 'integer'"
+			ng-model="cellData.settings[setting]"
+			type="number"
+			step="1"
+			title="{{setting}}"
+		></input>
+		<input
+			ng-if="details.type === 'positiveInteger'"
+			ng-model="cellData.settings[setting]"
+			type="number"
+			step="1"
+			title="{{setting}}"
+			min="0"
 		></input>
 		<!-- text -->
 		<input

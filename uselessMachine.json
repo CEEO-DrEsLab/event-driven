@@ -1,1 +1,59 @@
-{"portConfig":{"1":"Touch Sensor","2":"Touch Sensor","A":"Large Motor"},"triggers":[{"port":"1","mode":"press_in","settings":{},"actions":[{"port":"A","mode":"start_fwd","settings":{"power":"high"}}]},{"port":"1","mode":"release","settings":{},"actions":[{"port":"A","mode":"start_bkwd","settings":{"power":"medium"}}]},{"port":"2","mode":"press_in","settings":{},"actions":[{"port":"A","mode":"stop","settings":{"stopType":"coast"}}]}]}
+{
+    "portConfig":{
+        "1":"ev3TouchSensor",
+        "2":"ev3TouchSensor",
+        "A":"ev3LargeMotor"
+    },
+    "triggers":[
+        {
+            "port":"1",
+            "mode":"press",
+            "settings":{
+
+            },
+            "actions":[
+                {
+                    "port":"A",
+                    "mode":"start",
+                    "settings":{
+                        "direction":"forward",
+                        "power":"high"
+                    }
+                }
+            ]
+        },
+        {
+            "port":"1",
+            "mode":"release",
+            "settings":{
+
+            },
+            "actions":[
+                {
+                    "port":"A",
+                    "mode":"start",
+                    "settings":{
+                        "direction":"backward",
+                        "power":"medium"
+                    }
+                }
+            ]
+        },
+        {
+            "port":"2",
+            "mode":"press",
+            "settings":{
+
+            },
+            "actions":[
+                {
+                    "port":"A",
+                    "mode":"stop",
+                    "settings":{
+                        "stopType":"coast"
+                    }
+                }
+            ]
+        }
+    ]
+}
