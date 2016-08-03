@@ -1,5 +1,9 @@
 // Smart Browser Sending Script
+// By: Benjamin Zackin
+// Last Modified: 8/3/16
+// Notes: Handles HTTP request sending and response handling for the Smart Browser setup
 //
+
 var startTime = 0;
 
 //set up and send a CORS HTTP POST request
