@@ -2,11 +2,10 @@
 	Title: Single Send Demo
 	By: Benjamin Zackin
 	Last Modified: 8/3/2016
-	Notes: Sends HTTP POST request to Juliana's EV3 (IP 130.64.189.185:5000, Port 5000)
-		via JQuery and AJAX using CORS from a MAMP server hosted on Ben's laptop, IP 130.64.94.22 port 8888.
+	Notes: Sends HTTP POST request to Juliana's EV3 (http://130.64.189.185:5000) or Bianca's GrovePI (http://130.64.95.192:5000)
+		via XMLHttpRequests using CORS from a MAMP server hosted on Ben's laptop, IP 130.64.94.22 port 8888.
 
-	Last Major Modification: Changed send format from colon (:) delimited instructions (ex. "set:large motor:inA:...")
-		to JSON format (ex. {"status": "set", "sm_type":"large motor", ...})
+	Last Major Modification: Added destination input field to enable sending to different devices
 -->
 
 <!DOCTYPE html>
