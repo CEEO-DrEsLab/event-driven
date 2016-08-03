@@ -57,6 +57,7 @@ select, input, button {
 	height: 200px;
 	resize: none;
 	border: 3px #808080 inset;
+	border-radius: 3px;
 }
 #port-config {
 	margin: 10px auto;
