@@ -1,6 +1,6 @@
 <span>
 	<div ng-if="cellType === 'output'" class="edp-arrow"></div>
-	{{cellData.channel ? channelNames[cellData.channel] : 'Port ' + cellData.port + ' ' + channelNames[portConfig[cellData.port]]}}<br/>
+	{{cellData.channel ? (cellData.channel | ev3ChannelName) : (cellData.port | ev3PortName) + ' ' + (portConfig[cellData.port] | ev3ChannelName)}}<br/>
 	<select
 		ng-model="cellData.mode"
 		ng-options="mode as mode for (mode, options) in channelModes[cellData.channel ? cellData.channel : portConfig[cellData.port]][cellType]"

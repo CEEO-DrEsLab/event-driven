@@ -1,0 +1,53 @@
+{
+  "portConfig": {
+    "ev3Port1": "ev3TouchSensor",
+    "ev3Port2": "ev3TouchSensor",
+    "ev3PortA": "ev3LargeMotor"
+  },
+  "triggers": [
+    {
+      "port": "ev3Port1",
+      "mode": "press",
+      "settings": {},
+      "actions": [
+        {
+          "port": "ev3PortA",
+          "mode": "start",
+          "settings": {
+            "direction": "forward",
+            "power": "high"
+          }
+        }
+      ]
+    },
+    {
+      "port": "ev3Port1",
+      "mode": "release",
+      "settings": {},
+      "actions": [
+        {
+          "port": "ev3PortA",
+          "mode": "start",
+          "settings": {
+            "direction": "backward",
+            "power": "medium"
+          }
+        }
+      ]
+    },
+    {
+      "port": "ev3Port2",
+      "mode": "press",
+      "settings": {},
+      "actions": [
+        {
+          "port": "ev3PortA",
+          "mode": "stop",
+          "settings": {
+            "stopType": "coast"
+          }
+        }
+      ]
+    }
+  ]
+}

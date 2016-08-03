@@ -83,7 +83,7 @@
 	"temperature": {
 		"peripheral_type": "temperature_sensor",
 		"port": ["in1","in2","in3","in4"],
-		"scale": ["celcius","fahrenheit"],
+		"scale": ["celsius","fahrenheit"],
 		"temperature_threshold": "temp"
 	},
 

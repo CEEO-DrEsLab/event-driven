@@ -1,0 +1,200 @@
+{
+  "portConfig": {
+    "ev3Port1": "ev3TouchSensor",
+    "ev3Port4": "ev3ColorSensor",
+    "ev3PortA": "ev3LargeMotor",
+    "ev3PortB": "ev3LargeMotor",
+    "ev3PortD": "ev3MediumMotor"
+  },
+  "triggers": [
+    {
+      "channel": "program",
+      "mode": "programStart",
+      "actions": [
+        {
+          "port": "ev3PortB",
+          "mode": "resetEncoders"
+        },
+        {
+          "port": "ev3PortD",
+          "mode": "resetEncoders"
+        }
+      ]
+    },
+    {
+      "channel": "ev3BrickButton",
+      "mode": "press",
+      "settings": {
+        "button": "up"
+      },
+      "actions": [
+        {
+          "port": "ev3PortA",
+          "mode": "start",
+          "settings": {
+            "direction": "forward",
+            "power": "high"
+          }
+        }
+      ]
+    },
+    {
+      "channel": "ev3BrickButton",
+      "mode": "press",
+      "settings": {
+        "button": "down"
+      },
+      "actions": [
+        {
+          "port": "ev3PortA",
+          "mode": "start",
+          "settings": {
+            "direction": "backward",
+            "power": "high"
+          }
+        }
+      ]
+    },
+    {
+      "channel": "ev3BrickButton",
+      "mode": "press",
+      "settings": {
+        "button": "enter"
+      },
+      "actions": [
+        {
+          "port": "ev3PortA",
+          "mode": "stop",
+          "settings": {
+            "stopType": "brake"
+          }
+        }
+      ]
+    },
+    {
+      "channel": "ev3BrickButton",
+      "mode": "press",
+      "settings": {
+        "button": "left"
+      },
+      "actions": [
+        {
+          "port": "ev3PortB",
+          "mode": "start",
+          "settings": {
+            "direction": "forward",
+            "power": "medium"
+          }
+        }
+      ]
+    },
+    {
+      "port": "ev3Port1",
+      "mode": "press",
+      "actions": [
+        {
+          "port": "ev3PortB",
+          "mode": "stop",
+          "settings": {
+            "stopType": "coast"
+          }
+        },
+        {
+          "port": "ev3PortD",
+          "mode": "start",
+          "settings": {
+            "direction": "backward",
+            "power": "medium"
+          }
+        }
+      ]
+    },
+    {
+      "port": "ev3Port4",
+      "mode": "rgbValuePasses",
+      "settings": {
+        "color": "red",
+        "threshold": 190,
+        "comparisonType": "above"
+      },
+      "actions": [
+        {
+          "channel": "ev3BrickSound",
+          "mode": "playFile",
+          "settings": {
+            "filename": "elephant_call.rsf",
+            "volume": 100
+          }
+        },
+        {
+          "port": "ev3PortB",
+          "mode": "start",
+          "settings": {
+            "direction": "forward",
+            "power": "high"
+          }
+        },
+        {
+          "port": "ev3PortD",
+          "mode": "start",
+          "settings": {
+            "direction": "backward",
+            "power": "medium"
+          }
+        },
+        {
+          "port": "ev3PortB",
+          "mode": "resetEncoders"
+        },
+        {
+          "port": "ev3PortD",
+          "mode": "resetEncoders"
+        }
+      ]
+    },
+    {
+      "port": "ev3PortB",
+      "mode": "positionPasses",
+      "settings": {
+        "comparisonType": "below",
+        "threshold": -975,
+        "units": "degrees"
+      },
+      "actions": [
+        {
+          "port": "ev3PortB",
+          "mode": "stop",
+          "settings": {
+            "stopType": "brake"
+          }
+        },
+        {
+          "port": "ev3PortB",
+          "mode": "resetEncoders"
+        }
+      ]
+    },
+    {
+      "port": "ev3PortD",
+      "mode": "positionPasses",
+      "settings": {
+        "comparisonType": "above",
+        "threshold": 770,
+        "units": "degrees"
+      },
+      "actions": [
+        {
+          "port": "ev3PortD",
+          "mode": "stop",
+          "settings": {
+            "stopType": "brake"
+          }
+        },
+        {
+          "port": "ev3PortD",
+          "mode": "resetEncoders"
+        }
+      ]
+    }
+  ]
+}
