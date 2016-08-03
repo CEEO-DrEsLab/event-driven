@@ -48,6 +48,8 @@
 		<!-- Buttons added for communication -->
 		<button ng-click="startSending()">SEND</button><br/>
 		<button ng-click="stopSending()">STOP</button><br/>
+		URL:<input type="text" ng-model="urlToSend" size="15"></input>
+		<!-- End communication section -->
 	</div>
 	<div id="port-config" class="shrink-box">
 		<h2 class="column-label">EV3 Ports</h2>
@@ -719,18 +721,20 @@
 		];
 
 		// EV3 data
-		$scope.inputPorts    = edpEv3Constants.EV3_INPUT_PORTS;
-		$scope.outputPorts   = edpEv3Constants.EV3_OUTPUT_PORTS;
-		$scope.inputPeripherals       = edpEv3Constants.EV3_INPUT_PERIPHERAL;
-		$scope.outputPeripherals        = edpEv3Constants.EV3_OUTPUT_PERIPHERALS;
-		$scope.builtins      = edpEv3Constants.EV3_BUILTINS;
-		$scope.channelModes  = edpEv3Constants.EV3_CHANNEL_MODES;
-		$scope.channelColors = edpEv3Constants.EV3_CHANNEL_COLORS;
-		$scope.channelNames  = edpEv3Constants.EV3_CHANNEL_NAMES;
+		$scope.inputPorts        = edpEv3Constants.EV3_INPUT_PORTS;
+		$scope.outputPorts       = edpEv3Constants.EV3_OUTPUT_PORTS;
+		$scope.inputPeripherals  = edpEv3Constants.EV3_INPUT_PERIPHERAL;
+		$scope.outputPeripherals = edpEv3Constants.EV3_OUTPUT_PERIPHERALS;
+		$scope.builtins          = edpEv3Constants.EV3_BUILTINS;
+		$scope.channelModes      = edpEv3Constants.EV3_CHANNEL_MODES;
+		$scope.channelColors     = edpEv3Constants.EV3_CHANNEL_COLORS;
+		$scope.channelNames      = edpEv3Constants.EV3_CHANNEL_NAMES;
 
 		// The code as JSON. Represented in the interface in a textarea.
 		// Updated to match the model whenever a button is pressed
 		$scope.codeJSON = '';
+
+		$scope.urlToSend = '';
 
 		// Gets the current code mode and config data as a single JSON object
 		// Alerts the user of the code, which can be sleected for copy-pasting
@@ -749,16 +753,22 @@
 			$scope.triggers = data.triggers;
 		};
 
+		var sending = false;
 
 		$scope.startSending = function () {
-			modelParse.parse_data(angular.toJson({
-				portConfig: $scope.portConfig,
-				triggers: $scope.triggers
-			}));
+			if (!sending) {
+				sending = true;
+				modelParse.url = $scope.urlToSend;
+				modelParse.parse_data(angular.toJson({
+					portConfig: $scope.portConfig,
+					triggers: $scope.triggers
+				}));
+			}
 		};
 
 		$scope.stopSending = function () {
 			modelParse.handleStop();
+			sending = false;
 		}
 
 	}]);
