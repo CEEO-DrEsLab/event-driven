@@ -1,0 +1,74 @@
+{
+  "portConfig": {
+    "ev3Port1": "ev3TouchSensor",
+    "ev3Port2": "ev3TouchSensor",
+    "ev3Port4": "ev3TouchSensor",
+    "ev3Port3": "ev3TouchSensor"
+  },
+  "triggers": [
+    {
+      "port": "ev3Port1",
+      "mode": "press",
+      "actions": [
+        {
+          "channel": "ev3BrickSound",
+          "mode": "playNote",
+          "settings": {
+            "note": "C",
+            "octave": 1,
+            "volume": 50,
+            "duration": 1
+          }
+        }
+      ]
+    },
+    {
+      "port": "ev3Port2",
+      "mode": "press",
+      "actions": [
+        {
+          "channel": "ev3BrickSound",
+          "mode": "playNote",
+          "settings": {
+            "note": "E",
+            "octave": 1,
+            "volume": 50,
+            "duration": 1
+          }
+        }
+      ]
+    },
+    {
+      "port": "ev3Port3",
+      "mode": "press",
+      "actions": [
+        {
+          "channel": "ev3BrickSound",
+          "mode": "playNote",
+          "settings": {
+            "note": "G",
+            "octave": 1,
+            "volume": 50,
+            "duration": 1
+          }
+        }
+      ]
+    },
+    {
+      "port": "ev3Port4",
+      "mode": "press",
+      "actions": [
+        {
+          "channel": "ev3BrickSound",
+          "mode": "playNote",
+          "settings": {
+            "note": "C",
+            "octave": 2,
+            "volume": 50,
+            "duration": 1
+          }
+        }
+      ]
+    }
+  ]
+}
