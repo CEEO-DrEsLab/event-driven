@@ -201,9 +201,9 @@ var modelParse = {
 			set_str += this.parse_port(action_arr[k].port);
 			set_str += '","info":"';
 			set_str += this.parse_action_info(action_arr[k].mode);
-			set_str += '","value":"';
+			set_str += '","value":';
 			set_str += this.parse_action_val(action_arr[k]);
-			set_str += '"}';
+			set_str += '}';
 
 			console.log("-------------------------------------------------------");
 			console.log(set_str); // print the set instruction to the console
@@ -215,6 +215,17 @@ var modelParse = {
 
 			makeCorsRequest(this.url,set_str,k,false); // send the 'set' instruction via HTTP POST request
 		}
+	},
+
+	// parse_identifier()
+	//		Function for inserting trigger setting keys for 'get' instructions.
+	//		For 'get' instructions to some EV3 sensors, the info field may just be 'value'.
+	//			However, other peripherals may reqire different 'info' arguments. 
+	//		TODO:
+	//			-Add compatibility with the GrovePI
+	//
+	parse_identifier: function(identifier) {
+		return this.parseIdTranslations[identifier];
 	},
 
 	// Dictionary object for parsing peripheral identifiers to an EV3-recognizable format.
@@ -233,20 +244,9 @@ var modelParse = {
 		"ratePasses":"rate"
 	},
 
-	// parse_identifier()
-	//		Function for inserting trigger setting keys for 'get' instructions.
-	//		For 'get' instructions to some EV3 sensors, the info field may just be 'value'.
-	//			However, other peripherals may reqire different 'info' arguments. 
-	//		TODO:
-	//			-Add compatibility with the GrovePI
-	//
-	parse_identifier: function(identifier) {
-		return this.parseIdTranslations[identifier];
-	},
-
 	
 	// get_trigger_units()
-	//		Returns the units field of the input trigger object
+	//		Returns the units field of the input trigger object.
 	//		For peripherals that measure non-boolean values, return the desired units.
 	//			otherwise, we request the raw peripheral value.
 	//		TODO:
@@ -372,42 +372,42 @@ var modelParse = {
 
 	stopMotor: function(settings) {
 		var stopType  = {
-			"brake": "break",
-			"coast": "coast"
+			"brake": '"break"',
+			"coast": '"coast"'
 		};
 		return stopMode[settings.stopType];
 	},
 
 	switchDirection: function() {
-		return "switchDir";
+		return '"switchDir"';
 	},
 
 	reset: function() {
-		return "resetEnc";
+		return '"resetEnc"';
 	},
 
 	tone: function(settings) {
-		return "[" + settings.frequency + "," + settings.duration + "]";
+		return '[' + settings.frequency + ',' + settings.duration + ']';
 	},
 
 	note: function(settings) {
-		return "[" + settings.note + "," + settings.duration + ","+ octave+"]";
+		return '[' + settings.note + ',' + settings.duration + ','+ octave+']';
 	},
 
 	note: function(settings) {
-		return settings.filename;
+		return '"' + settings.filename + '"';
 	},
 
 	turnOn: function(settings) {
-		return settings.color;
+		return  '"' + settings.color + '"';
 	},
 
 	turnOff: function(settings) {
-		return "off";
+		return '"off"';
 	},
 
 	stop: function() {
-		return "stop";
+		return '"stop"';
 	},
 
 	/*************************************
