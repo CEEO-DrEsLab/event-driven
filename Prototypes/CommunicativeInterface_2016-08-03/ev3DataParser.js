@@ -269,15 +269,15 @@ var modelParse = {
 	//			-Add GrovePI port mapping capability
 	//
 	parsePortTranslations: { // dictionary to convert port names to EV3 readable format
-		"A":"outA",
-		"B":"outB",
-		"C":"outC",
-		"D":"outD",
-		"1":"in1",
-		"2":"in2",
-		"3":"in3",
-		"4":"in4",
-		"Brick":"brick"
+		"ev3PortA":"outA",
+		"ev3PortB":"outB",
+		"ev3PortC":"outC",
+		"ev3PortD":"outD",
+		"ev3Port1":"in1",
+		"ev3Port2":"in2",
+		"ev3Port3":"in3",
+		"ev3Port4":"in4",
+		"ev3Brick":"brick"
 	},
 
 	// parse_port()
@@ -285,7 +285,7 @@ var modelParse = {
 	//
 	parse_port: function(portName) {
 		if (!portName) {
-			return this.parsePortTranslations["Brick"];
+			return this.parsePortTranslations["ev3Brick"];
 		}
 		else {
 			return this.parsePortTranslations[portName];
