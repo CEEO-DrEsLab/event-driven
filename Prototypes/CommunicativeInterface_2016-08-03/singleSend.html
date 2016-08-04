@@ -142,10 +142,11 @@
 	<form onsubmit="return false;">
 		<h5>EV3 TEST COMMANDS:</h5>
 		<h6>{"status":"set","io_type":"large motor","port":"outA","info":"run forever","value":75}</h6>
-		<h6>{"status":"get","io_type":"touch","port":"in1","info":"value","value":-1}</h6>
+		<h6>{"status":"get","io_type":"touch","port":"in1","info":"value","mode":"raw"}</h6>
 		<h6>{"status":"set","io_type":"large motor","port":"outA","info":"stop all","value":"coast"}<h6>
 		<h5>GROVEPI TEST COMMANDS:</h5>
-		<h6>grovePI test commands go here</h6>
+		<h6>{"status":"set","io_type":"led","port":4,"info":"on","value":-1}</h6>
+		<h6>{"status":"get","io_type":"button","port":3,"info":"value","mode":"raw"}</h6>
 		<textarea name="value1" id="data" rows="10" cols="30"></textarea>
 		<h5> Juliana's EV3:</h5>
 		<h6> http://130.64.94.159:5000</h6>

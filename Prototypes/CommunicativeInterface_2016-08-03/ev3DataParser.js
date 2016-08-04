@@ -198,7 +198,7 @@ var modelParse = {
 			set_str += '","info":"';
 			set_str += this.parse_action_info(action_arr[k].mode);
 			set_str += '","value":';
-			set_str += this.parse_action_val(action_arr[k]);
+			set_str += this.parse_action_mode(action_arr[k]);
 			set_str += '}';
 
 			console.log("-------------------------------------------------------");
@@ -335,6 +335,7 @@ var modelParse = {
 		"playTone":"tone",
 		"playNote":"note",
 		"playFile":"file",
+		"textToSpeech":"speech",
 		"lightOn":"on",
 		"lightOff":"off",
 		"programStop":"stop",
@@ -345,8 +346,8 @@ var modelParse = {
 	//		TODO:
 	//			-Add all GrovePI output peripherals
 	//
-	parse_action_val: function(action) {
-		return this.actionValueDictionary[action.channel][action.mode](action.settings);
+	parse_action_mode: function(action) {
+		return this.actionModeDictionary[action.channel][action.mode](action.settings);
 		// add in value info for all others
 	},
 
@@ -383,16 +384,20 @@ var modelParse = {
 	},
 
 	tone: function(settings) {
-		return '[' + settings.frequency + ',' + settings.duration + ']';
+		return '{"frequency":' + settings.frequency + ',"volume":' settings.volume + ',"duration":' + settings.duration + '}';
 	},
 
 	note: function(settings) {
-		return '[' + settings.note + ',' + settings.duration + ','+ octave+']';
+		return '{"note":"' + settings.note + '","octave":' + settings.octave + ',"volume":' + settings.volume + ',"duration":'  + settings.duration + '}';
 	},
 
-	note: function(settings) {
-		return '"' + settings.filename + '"';
+	file: function(settings) {
+		return '{"filename":"' + settings.filename + '","volume":' + settings.volume + '}';
 	},
+
+	speech: function(settings) {
+		return '{"message":"' + settings.message + '","volume":' + settings.volume '}';
+	}
 
 	turnOn: function(settings) {
 		return  '"' + settings.color + '"';
@@ -413,7 +418,7 @@ var modelParse = {
 
 	// Dictionary of Action value-field accessor functions
 	//
-	actionValueDictionary: {
+	actionModeDictionary: {
 		"Large Motor": {
 			"start": this.startMotor,
 			"stop": this.stopMotor,
@@ -429,7 +434,8 @@ var modelParse = {
 		"Brick Sound": {
 			"playTone":this.tone,
 			"playNote":this.note,
-			"playFile":this.file
+			"playFile":this.file,
+			"textToSpeech":this.speech
 		},
 		"Brick Light": {
 			"lightOn":this.turnOn,
