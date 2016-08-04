@@ -77,17 +77,13 @@ var modelParse = {
 
 	// handleStop()
 	// 		Emergency Stop function.
-	//		Stops all outputs and exits the state-checking loop.
+	//		Stops all motors and exits the state-checking loop.
 	//		TODO:
-	//			-Make this function accessable from the interface so the user can stop their code's execution at will
-	//			-Tie this function to the "End of Program" action block, so that the user can programmatically end their code.
+	//			-Also tie this function to the "End of Program" action block, so that the user can programmatically end their code.
 	//			
 	handleStop: function () { // not currently working.
 			// stop all EV3 motors
-			makeCorsRequest(modelParse.url,'{"status":"set","io_type":"ev3LargeMotor","port":"outA","info":"stop","value":"brake"}', 0, false);
-			makeCorsRequest(modelParse.url,'{"status":"set","io_type":"ev3LargeMotor","port":"outB","info":"stop","value":"brake"}', 0, false);
-			makeCorsRequest(modelParse.url,'{"status":"set","io_type":"ev3LargeMotor","port":"outC","info":"stop","value":"brake"}', 0, false);
-			makeCorsRequest(modelParse.url,'{"status":"set","io_type":"ev3LargeMotor","port":"outD","info":"stop","value":"brake"}', 0, false);
+			makeCorsRequest(modelParse.url,'{"status":"set","io_type":"large motor","port":"outA","info":"stop all","value":"coast"}', 0, false);
 			
 			 // stop trigger scanning loop
 			clearInterval(delayedLoop);
@@ -372,7 +368,7 @@ var modelParse = {
 
 	stopMotor: function(settings) {
 		var stopType  = {
-			"brake": '"break"',
+			"brake": '"brake"',
 			"coast": '"coast"'
 		};
 		return stopMode[settings.stopType];
