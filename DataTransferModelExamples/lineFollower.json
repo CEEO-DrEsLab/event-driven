@@ -1,0 +1,83 @@
+{
+  "portConfig": {
+    "ev3Port1": "ev3ColorSensor",
+    "ev3PortA": "ev3LargeMotor",
+    "ev3PortD": "ev3LargeMotor"
+  },
+  "triggers": [
+    {
+      "channel": "program",
+      "mode": "programStart",
+      "actions": [
+        {
+          "port": "ev3PortA",
+          "mode": "start",
+          "settings": {
+            "direction": "forward",
+            "power": "medium"
+          }
+        },
+        {
+          "port": "ev3PortD",
+          "mode": "start",
+          "settings": {
+            "direction": "forward",
+            "power": "medium"
+          }
+        }
+      ]
+    },
+    {
+      "port": "ev3Port1",
+      "mode": "reflectedLightPasses",
+      "settings": {
+        "comparisonType": "above",
+        "threshold": "dim"
+      },
+      "actions": [
+        {
+          "port": "ev3PortA",
+          "mode": "start",
+          "settings": {
+            "direction": "forward",
+            "power": "low"
+          }
+        },
+        {
+          "port": "ev3PortD",
+          "mode": "start",
+          "settings": {
+            "direction": "forward",
+            "power": "high"
+          }
+        }
+      ]
+    },
+    {
+      "port": "ev3Port1",
+      "mode": "reflectedLightPasses",
+      "settings": {
+        "comparisonType": "below",
+        "threshold": "dim"
+      },
+      "actions": [
+        {
+          "port": "ev3PortA",
+          "mode": "start",
+          "settings": {
+            "direction": "forward",
+            "power": "high"
+          }
+        },
+        {
+          "port": "ev3PortD",
+          "mode": "start",
+          "settings": {
+            "direction": "forward",
+            "power": "low"
+          }
+        }
+      ]
+    }
+  ]
+}
