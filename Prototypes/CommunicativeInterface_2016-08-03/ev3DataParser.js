@@ -384,7 +384,7 @@ var modelParse = {
 	},
 
 	tone: function(settings) {
-		return '{"frequency":' + settings.frequency + ',"volume":' settings.volume + ',"duration":' + settings.duration + '}';
+		return '{"frequency":' + settings.frequency + ',"volume":' + settings.volume + ',"duration":' + settings.duration + '}';
 	},
 
 	note: function(settings) {
@@ -396,8 +396,8 @@ var modelParse = {
 	},
 
 	speech: function(settings) {
-		return '{"message":"' + settings.message + '","volume":' + settings.volume '}';
-	}
+		return '{"message":"' + settings.message + '","volume":' + settings.volume + '}';
+	},
 
 	turnOn: function(settings) {
 		return  '"' + settings.color + '"';
