@@ -326,7 +326,7 @@ var modelParse = {
 	//		-Add all GrovePI peripherals.
 	//
 	actionInfoTranslations: {
-		"start":"run_forever",
+		"start":"run forever",
 		"switchDirection":"switch",
 		"stop":"stop",
 		"resetEncoders":"reset",
