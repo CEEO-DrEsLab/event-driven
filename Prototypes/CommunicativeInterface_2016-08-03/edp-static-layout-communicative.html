@@ -23,7 +23,7 @@
 	<script src="ev3DataParser.js"></script>
 </head>
 
-<body ng-app="myApp" ng-controller="myCtrl">
+<body ng-app="edpApp" ng-controller="edpCtrl">
 	<div id="left-sidebar" class="shrink-box">
 		<h2>What is This?</h2><br/>
 		<span style="text-shadow:none;">
@@ -89,7 +89,7 @@
 	</div>
 
 	<script>
-	var app = angular.module('myApp', []);
+	var app = angular.module('edpApp', []);
 	app.service('edpEv3Constants', function () {
 		// EV3 data
 		// These are used only in the port config panel, and probably shouldn't be in the root scope
@@ -516,7 +516,7 @@
 			},
 		};
 	}]);
-	app.controller('myCtrl', ['$scope', 'edpEv3Constants', function($scope, edpEv3Constants) {
+	app.controller('edpCtrl', ['$scope', 'edpEv3Constants', function($scope, edpEv3Constants) {
 		// Port Configuration Panel Dats
 		// Set by blocks in port config panel
 		// Accessed by code blocks which refer to ports but don't know the peripherals
