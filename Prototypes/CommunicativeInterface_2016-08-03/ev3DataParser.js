@@ -57,6 +57,9 @@ var modelParse = {
 					}
 				}
 			}
+			if (this.triggerList[triggerIndex].channel === "program") {
+				this.send_set(this.triggerList[triggerIndex].actions); // loop through the outputs for that state change and send set requests for all of them
+			}
 			this.send_get(this.triggerList[i], i, true);
 		}
 		//console.log("parse_data Fcn://\tstart values for all triggers set");
@@ -87,7 +90,7 @@ var modelParse = {
 			
 			 // stop trigger scanning loop
 			clearInterval(delayedLoop);
-},
+	},
 
 	// is_state_change()
 	//		State Change checking function
@@ -98,27 +101,30 @@ var modelParse = {
 	//			-Implement state change detection for all GrovePI inputs
 	//
 	is_state_change: function(response, thisTrigger, lastVal) {
-		if ((thisTrigger.mode == "press") && (lastVal != response) && (response == 1)) { // if current button state is different from last state and is now pressed
+		if (response === "program start"){
+			return false;
+		}
+		if ((thisTrigger.mode === "press") && (lastVal != response) && (response === 1)) { // if current button state is different from last state and is now pressed
 			console.log("is_state_change Fcn://\t button press state change detected");
 			return true;
 		}
-		else if ((thisTrigger.mode == "release") && (lastVal != response) && (response == 0)) { // if current button state is different from last state and is now released
+		else if ((thisTrigger.mode === "release") && (lastVal != response) && (response === 0)) { // if current button state is different from last state and is now released
 			console.log("is_state_change Fcn://\t button release state change detected");
 			return true;
 		}
-		else if ((thisTrigger.mode == "switchColor") && (thisTrigger.settings.transitionType == "to") && (lastVal != response) && (response == thisTrigger.settings.color)) {
+		else if ((thisTrigger.mode === "switchColor") && (thisTrigger.settings.transitionType === "to") && (lastVal != response) && (response === thisTrigger.settings.color)) {
 			return true;
 		}
-		else if ((thisTrigger.mode == "switchColor") && (thisTrigger.settings.transitionType == "from") && (lastVal == response) && (response != thisTrigger.settings.color)) {
+		else if ((thisTrigger.mode === "switchColor") && (thisTrigger.settings.transitionType === "from") && (lastVal === response) && (response != thisTrigger.settings.color)) {
 			return true;
 		}
-		else if ((thisTrigger.mode == "countExceeds") && (lastVal < thisTrigger.settings.threshold) && (response >= thisTrigger.settings.threshold)) {
+		else if ((thisTrigger.mode === "countExceeds") && (lastVal < parseThreshold(thisTrigger.settings.threshold)) && (response >= parseThreshold(thisTrigger.settings.threshold))) {
 			return true;
 		}
-		else if ((this.detect_comparison(thisTrigger.settings.comparisonType) == "passes above") && (lastVal < thisTrigger.settings.threshold) && (response >= thisTrigger.settings.threshold)) {
+		else if ((this.detect_comparison(thisTrigger.settings.comparisonType) === "passes above") && (lastVal < parseThreshold(thisTrigger.settings.threshold) && (response >= parseThreshold(thisTrigger.settings.threshold))) {
 			return true;
 		}
-		else if ((this.detect_comparison(thisTrigger.settings.comparisonType) == "passes below") && (lastVal > thisTrigger.threshold) && (response <= thisTrigger.threshold)) {
+		else if ((this.detect_comparison(thisTrigger.settings.comparisonType) === "passes below") && (lastVal > parseThreshold(thisTrigger.settings.threshold)) && (response <= parseThreshold(thisTrigger.settings.threshold))) {
 			return true;
 		}
 
@@ -132,11 +138,24 @@ var modelParse = {
 		}
 	},
 
+	parseThreshold: function(threshold) {
+		if (threshold ==== "dark") {
+			return 30;
+		}
+		else if (threshold ==== "dim") {
+			return 45;
+		}
+		else if (threshold ==== "bright") {
+			return 60;
+		} 
+		return threshold;
+	},
+
 	detect_comparison: function(comparison) {
-		if (comparison == "above" || comparison == "exit" || "countExceeds") {
+		if (comparison === "above" || comparison === "exit") {
 			return "passes above";
 		}
-		else if (comparison == "below" || comparison == "enter") {
+		else if (comparison === "below" || comparison === "enter") {
 			return "passes below";
 		}
 	},
@@ -154,111 +173,24 @@ var modelParse = {
 	//
 	send_get: function(trig,index,isFirst) {
 		/*SEND A REQUEST WITH:*/
-		var get_str = '{"status":"';
-			get_str += 'get';
-			get_str += '","io_type":"';
-			get_str += this.parse_name(trig.channel);
-			get_str += '","port":"';
-			get_str += this.parse_port(trig.port);
-			get_str += '","info":"';
-			get_str += this.parse_identifier(trig.mode);
-			get_str += '","mode":"';
-			get_str += this.get_trigger_units(trig);// dummy value to make this the right number of arguments (EV3 doesn't use value field for "get"s)	
-			get_str += '"}';
+		var getInstruction = {};
+		getInstruction.status = "get";
+		getInstruction.io_type = this.parse_name(trigger.channel);
+		getInstruction.port = this.parse_port(trigger.port);
+		getInstruction.settings = access_io_builder(trig);
 
-			/*****************PSEUDOCODE, NOT IMPLEMENTED YET!**********************
-			// var destinationURL = trig.deviceURL; // maybe adding a field to each trigger encoding the URL of the device it goes with could be used to allow multi-device handling.
-			//										// you could then pass in 'destinationURL' instead of the hard coded 'this.url' to the 'makeCorsRequest()' function to send to whichever device you want.
-			***************************END PSEUDOCODE*******************************/
 
-			makeCorsRequest(this.url,get_str,index,isFirst); // send the 'get' instruction via HTTP POST request
+		console.log("-------------------------------------------------------");
+		console.log(getInstruction); // print the get instruction to the console
+
+		/*****************PSEUDOCODE, NOT IMPLEMENTED YET!**********************
+		// var destinationURL = trig.deviceURL; // maybe adding a field to each trigger encoding the URL of the device it goes with could be used to allow multi-device handling.
+		//										// you could then pass in 'destinationURL' instead of the hard coded 'this.url' to the 'makeCorsRequest()' function to send to whichever device you want.
+		***************************END PSEUDOCODE*******************************/
+
+		makeCorsRequest(this.url,JSON.stringify(getInstruction),index,isFirst); // send the 'get' instruction via HTTP POST request
 	},
 
-	// send_set()
-	//		'set' instruction assembly and sending function
-	//		Constructs 'set' instruction object as a JSON formatted string and 
-	//			sends it via HTTP POST request using the 'makeCorsRequest()' function.
-	//		Currently is only configured for interactions with the EV3.
-	//		TODO:
-	//			-Add port and peripheral name mapping for the GrovePI.
-	//			-Handle sending to different url's 
-	//				(Same as with the 'send_get()' function, we probably need to store the URL for each connected device with its
-	//					corresponding actions so we can dynamically handle multiple devices)
-	//
-	send_set: function(action_arr) {
-		var len = action_arr.length;
-		for (var k = 0; k < len; k++) {
-			/*SEND A REQUEST WITH:*/
-			var set_str = '{"status":"';
-			set_str += 'set';
-			set_str += '","io_type":"';
-			set_str += this.parse_name(action_arr[k].channel);
-			set_str += '","port":"';
-			set_str += this.parse_port(action_arr[k].port);
-			set_str += '","info":"';
-			set_str += this.parse_action_info(action_arr[k].mode);
-			set_str += '","value":';
-			set_str += this.parse_action_mode(action_arr[k]);
-			set_str += '}';
-
-			console.log("-------------------------------------------------------");
-			console.log(set_str); // print the set instruction to the console
-
-			/*****************PSEUDOCODE, NOT IMPLEMENTED YET!**********************
-			// var destinationURL = action_arr[k].deviceURL; // maybe adding a field to each action encoding the URL of the device it goes with could be used to allow multi-device handling.
-			//												// you could then pass in 'destinationURL' instead of the hard coded 'this.url' to the 'makeCorsRequest()' function to send to whichever device you want.
-			***************************END PSEUDOCODE*******************************/
-
-			makeCorsRequest(this.url,set_str,k,false); // send the 'set' instruction via HTTP POST request
-		}
-	},
-
-	// parse_identifier()
-	//		Function for inserting trigger setting keys for 'get' instructions.
-	//		For 'get' instructions to some EV3 sensors, the info field may just be 'value'.
-	//			However, other peripherals may reqire different 'info' arguments. 
-	//		TODO:
-	//			-Add compatibility with the GrovePI
-	//
-	parse_identifier: function(identifier) {
-		return this.parseIdTranslations[identifier];
-	},
-
-	// Dictionary object for parsing peripheral identifiers to an EV3-recognizable format.
-	//	TODO:
-	//		-Add all GrovePI peripherals.
-	//
-	parseIdTranslations: {
-		"press":"value",
-		"release":"value",
-		"distancePasses":"value",
-		//"detectColor":"color",
-		"reflectedLightPasses":"value",
-		"ambientLightPasses":"value",
-		//"rgbValuePasses":"value",
-		"positionPasses":"angle",
-		"ratePasses":"rate"
-	},
-
-	
-	// get_trigger_units()
-	//		Returns the units field of the input trigger object.
-	//		For peripherals that measure non-boolean values, return the desired units.
-	//			otherwise, we request the raw peripheral value.
-	//		TODO:
-	//			-Add compatibility with GrovePI
-	//
-	get_trigger_units: function(trigger){
-		if (trigger.channel == "ev3LargeMotor" || trigger.channel == "ev3MediumMotor" || trigger.channel == "ev3UltrasonicSensor" || trigger.channel == "ev3GyroSensor") {
-			return trigger.settings.units;
-		}
-		else if (trigger.channel == "ev3BrickButton") {
-			return trigger.settings.button;
-		}
-		else {
-			return "raw";
-		}
-	},
 
 	// Dictionary object for parsing the port names to a EV3-recognizable format.
 	// 		TODO:
@@ -273,7 +205,7 @@ var modelParse = {
 		"ev3Port2":"in2",
 		"ev3Port3":"in3",
 		"ev3Port4":"in4",
-		"ev3Brick":"brick"
+		"ev3Brick":"onboard"
 	},
 
 	// parse_port()
@@ -302,6 +234,7 @@ var modelParse = {
 		"ev3BrickSound":"sound",
 		"ev3LargeMotor":"large motor",
 		"ev3MediumMotor":"medium motor"
+		"program":"stop all"
 	},
 
 	// parse_name()
@@ -311,138 +244,319 @@ var modelParse = {
 		return this.parseNameTranslations[io_type];
 	},
 
-	// set_act_info()
-	//		Function parses the action's mode to match the EV3's corresponding command
-	//		TODO: 
-	//			-Add all GrovePI output peripherals
-	//			
-	parse_action_info: function(mode) {
-		return this.actionInfoTranslations[mode];
+	access_io_builder: function(io_object, status, channel) {
+		return this.ioBuilderFunctions[io_object.status][io_object.channel](io_object);
 	},
 
-
-	// Dictionary object for parsing peripheral names to an EV3-recognizable format.
-	//	TODO:
-	//		-Add all GrovePI peripherals.
-	//
-	actionInfoTranslations: {
-		"start":"run forever",
-		"switchDirection":"switch",
-		"stop":"stop",
-		"resetEncoders":"reset",
-		"press":"value",
-		"release":"value",
-		"playTone":"tone",
-		"playNote":"note",
-		"playFile":"file",
-		"textToSpeech":"speech",
-		"lightOn":"on",
-		"lightOff":"off",
-		"programStop":"stop",
+	ioBuilderFunctions = {
+		"get": {
+			"Touch Sensor": this.get_touch,
+			"Ultrasonic Sensor": this.get_ultrasonic,
+			"Color Sensor": this.get_color,
+			"Gyro Sensor": this.get_gyro,
+			"Large Motor": this.get_l_motor,
+			"Medium Motor": this.get_m_motor,
+			//"Infrared Sensor": this.get_infrared,
+			"Brick Button": this.get_brick_button
+		},
+		"set": {
+			"Program": this.program_stop,
+			"Large Motor": this.set_l_motor,
+			"Medium Motor": this.set_m_motor,
+			"Brick Sound": this.set_sound,
+			"Brick Light": this.set_light
+		}
 	},
 
-	// set_act_val()
-	//		Function parses the action's settings to an EV3-recognizable format
+	get_touch: function(trigger) {
+		var touchSettings = {};
+		if (trigger.settings.mode === "press" || trigger.settings.mode === "release") {
+			touchSettings.touch_mode = "raw_touch";
+		}
+		else if (trigger.settings.mode === "countExceeds") {
+			touchSettings.touch_mode = "count";
+		}
+		return touchSettings;
+	},
+
+	get_ultrasonic: function(trigger) {
+		var ultrasonicSettings = {};
+		if (trigger.settings.mode === "distancePasses") {
+			ultrasonicSettings.us_mode = "distance";
+
+			if (trigger.settings.units === "inches") {
+				ultrasonicSettings.units = "in";
+			}
+			else if (trigger.settings.units === "centimeters") {
+				ultrasonicSettings.units = "cm";
+			}
+		}
+		return ultrasonicSettings;
+	},
+
+	get_color: function(trigger) {
+		var colorSettings = {};
+		if (trigger.settings.mode === "switchColor") {
+			colorSettings.color_mode = "color";
+		}
+		else if (trigger.settings.mode === "reflectedLightPasses") {
+			colorSettings.color_mode = "reflected";
+		}
+		else if (trigger.settings.mode === "ambientLightPasses") {
+			colorSettings.color_mode = "ambient";
+		}
+		else if (trigger.settings.mode === "rgbValuePasses") {
+			colorSettings.color_mode ="rgb_raw";
+		}
+		return colorSettings;
+	},
+
+	get_gyro: function(trigger) {
+		var gyroSettings = {};
+		if (trigger.settings.mode === "positionPasses") {
+			gyroSettings.gyro_mode = "position";
+
+			if (trigger.settings.units === "degrees") {
+				gyroSettings.units = "deg";
+			}
+			else if (trigger.settings.units === "rotations") {
+				gyroSettings.units = "rot";
+			}
+		}
+		else if (trigger.settings.mode === "ratePasses") {
+			gyroSettings.gyro_mode = "rate";
+
+			if (trigger.settings.units === "deg/sec") {
+				gyroSettings.units = "deg_per_sec";
+			}
+			else if (trigger.settings.units === "rot/sec") {
+				gyroSettings.units = "rot_per_sec";
+			}
+		}
+		return gyroSettings;
+	},
+
+	get_l_motor: function(trigger) {
+		var lMotorSettings = {};
+		if (trigger.settings.mode === "positionPasses") {
+			lMotorSettings.motor_mode = "position";
+
+			if (trigger.settings.units === "degrees") {
+				lMotorSettings.units = "deg";
+			}
+			else if (trigger.settings.units === "rotations") {
+				lMotorSettings.units = "rot";
+			}
+		}
+		else if (trigger.settings.mode === "ratePasses") {
+			lMotorSettings.motor_mode = "rate";
+
+			if (trigger.settings.units === "deg/sec") {
+				lMotorSettings.units = "deg_per_sec";
+			}
+			else if (trigger.settings.units === "rot/sec") {
+				lMotorSettings.units = "rot_per_sec";
+			}
+		}
+		return lMotorSettings;
+	},
+
+	get_m_motor: function(trigger) {
+		var mMotorSettings = {};
+		if (trigger.settings.mode === "positionPasses") {
+			mMotorSettings.motor_mode = "position";
+
+			if (trigger.settings.units === "degrees") {
+				mMotorSettings.units = "deg";
+			}
+			else if (trigger.settings.units === "rotations") {
+				mMotorSettings.units = "rot";
+			}
+		}
+		else if (trigger.settings.mode === "ratePasses") {
+			mMotorSettings.motor_mode = "rate";
+
+			if (trigger.settings.units === "deg/sec") {
+				mMotorSettings.units = "deg_per_sec";
+			}
+			else if (trigger.settings.units === "rot/sec") {
+				mMotorSettings.units = "rot_per_sec";
+			}
+		}
+		return mMotorSettings;
+	},
+
+	get_brick_button: function(trigger) {
+		var brickButtonSettings = {};
+		if (trigger.settings.mode === "press" || trigger.settings.mode === "release") {
+			brickButtonSettings.touch_mode = "raw_touch";
+			brickButtonSettings.button = trigger.settings.button;
+		}
+		else if (trigger.settings.mode === "countExceeds") {
+			brickButtonSettings.touch_mode = "count";
+			brickButtonSettings.button = trigger.settings.button;
+		}
+		return brickButtonSettings;
+	},
+
+	// send_set()
+	//		'set' instruction assembly and sending function
+	//		Constructs 'set' instruction object as a JSON formatted string and 
+	//			sends it via HTTP POST request using the 'makeCorsRequest()' function.
+	//		Currently is only configured for interactions with the EV3.
 	//		TODO:
-	//			-Add all GrovePI output peripherals
+	//			-Add port and peripheral name mapping for the GrovePI.
+	//			-Handle sending to different url's 
+	//				(Same as with the 'send_get()' function, we probably need to store the URL for each connected device with its
+	//					corresponding actions so we can dynamically handle multiple devices)
 	//
-	parse_action_mode: function(action) {
-		return this.actionModeDictionary[action.channel][action.mode](action.settings);
-		// add in value info for all others
+	send_set: function(action_arr) {
+		var len = action_arr.length;
+		for (var k = 0; k < len; k++) {
+
+			var setInstruction = {};
+			setInstruction.status = "set";
+			setInstruction.io_type = this.parse_name(action_arr[k].channel);
+			setInstruction.port = this.parse_port(action_arr[k].port);
+			setInstruction.settings = access_io_builder(action_arr[k]);
+
+			console.log("-------------------------------------------------------");
+			console.log(setInstruction); // print the set instruction to the console
+
+			/*****************PSEUDOCODE, NOT IMPLEMENTED YET!**********************
+			// var destinationURL = action_arr[k].deviceURL; // maybe adding a field to each action encoding the URL of the device it goes with could be used to allow multi-device handling.
+			//												// you could then pass in 'destinationURL' instead of the hard coded 'this.url' to the 'makeCorsRequest()' function to send to whichever device you want.
+			***************************END PSEUDOCODE*******************************/
+
+			makeCorsRequest(this.url,JSON.stringify(setInstruction),k,false); // send the 'set' instruction via HTTP POST request
+		}
 	},
 
-	/*************************************
-	 **** Peripheral Action Functions ****
-	 *************************************/
-	startMotor: function(settings) {
+	set_l_motor: function(action) {
+		var lMotorSettings = {};
 		var sign = {
-				"forward": 1,
-				"backward": -1
+			"forward": 1,
+			"backward": -1
 		};
 		var powerLevel = {
 			"high": 100,
 			"medium": 66,
 			"low": 33
 		};
-		return powerLevel[settings.power] * sign[settings.direction];
-	},
 
-	stopMotor: function(settings) {
-		var stopType  = {
-			"brake": '"brake"',
-			"coast": '"coast"'
-		};
-		return stopMode[settings.stopType];
-	},
-
-	switchDirection: function() {
-		return '"switchDir"';
-	},
-
-	reset: function() {
-		return '"resetEnc"';
-	},
-
-	tone: function(settings) {
-		return '{"frequency":' + settings.frequency + ',"volume":' + settings.volume + ',"duration":' + settings.duration + '}';
-	},
-
-	note: function(settings) {
-		return '{"note":"' + settings.note + '","octave":' + settings.octave + ',"volume":' + settings.volume + ',"duration":'  + settings.duration + '}';
-	},
-
-	file: function(settings) {
-		return '{"filename":"' + settings.filename + '","volume":' + settings.volume + '}';
-	},
-
-	speech: function(settings) {
-		return '{"message":"' + settings.message + '","volume":' + settings.volume + '}';
-	},
-
-	turnOn: function(settings) {
-		return  '"' + settings.color + '"';
-	},
-
-	turnOff: function(settings) {
-		return '"off"';
-	},
-
-	stop: function() {
-		return '"stop"';
-	},
-
-	/*************************************
-	 ** End Peripheral Action Functions **
-	 *************************************/
-
-
-	// Dictionary of Action value-field accessor functions
-	//
-	actionModeDictionary: {
-		"Large Motor": {
-			"start": this.startMotor,
-			"stop": this.stopMotor,
-			"switch": this.switchDirection,
-			"resetEncoders": this.reset
-		},
-		"Medium Motor": {
-			"start": this.startMotor,
-			"stop": this.stopMotor,
-			"switch": this.switchDirection,
-			"resetEncoders": this.reset
-		},
-		"Brick Sound": {
-			"playTone":this.tone,
-			"playNote":this.note,
-			"playFile":this.file,
-			"textToSpeech":this.speech
-		},
-		"Brick Light": {
-			"lightOn":this.turnOn,
-			"lightOff":this.turnOff
-		},
-		"Program": {
-			"programStop": this.stop
+		if (action.settings.mode === "start") {
+			lMotorSettings.motor_mode = "run_forever";
+			lMotorSettings.power = powerLevel[action.settings.power] * sign[action.settings.direction];
 		}
-	}
+		else if (action.settings.mode === "switchDirection") {
+			lMotorSettings.motor_mode === "switch";
+		}
+		else if (action.settings.mode === "stop") {
+			lMotorSettings.motor_mode = "stop";
+			lMotorSettings.stop_type = action.settings.stopType;
+		}
+		else if (action.settings.mode === "resetEncoders") {
+			lMotorSettings.motor_mode = "reset"; // Not yet implemented on EV3
+		}
+		return lMotorSettings;
+	},
+
+	set_m_motor: function(action) {
+		var mMotorSettings = {};
+		var sign = {
+			"forward": 1,
+			"backward": -1
+		};
+		var powerLevel = {
+			"high": 100,
+			"medium": 66,
+			"low": 33
+		};
+
+		if (action.settings.mode === "start") {
+			mMotorSettings.motor_mode = "run_forever";
+			mMotorSettings.power = powerLevel[action.settings.power] * sign[action.settings.direction];
+		}
+		else if (action.settings.mode === "switchDirection") {
+			mMotorSettings.motor_mode === "switch";
+		}
+		else if (action.settings.mode === "stop") {
+			mMotorSettings.motor_mode = "stop";
+			mMotorSettings.stop_type = action.settings.stopType;
+		}
+		else if (action.settings.mode === "resetEncoders") {
+			mMotorSettings.motor_mode = "reset"; // Not yet implemented on EV3
+		}
+		return mMotorSettings;
+	},
+
+
+	set_sound: function(action) {
+		var soundSettings = {};
+		if (action.settings.mode === "playTone") {
+			soundSettings.sound_mode = "tone";
+			soundSettings.frequency = action.settings.frequency;
+			soundSettings.volume = action.settings.volume;
+			soundSettings.duration = action.settings.duration;
+		}
+		else if (action.settings.mode === "playNote") {
+			soundSettings.sound_mode = "note";
+			soundSettings.note = action.settings.note;
+			soundSettings.octave = action.settings.octave;
+			soundSettings.volume = action.settings.volume;
+			soundSettings.duration =  action.settings.duration;
+		}
+		else if (action.settings.mode === "playFile") {
+			soundSettings.sound_mode = "file";
+			soundSettings.filename = action.settings.filename;
+			soundSettings.volume = action.settings.volume;
+		}
+		else if (action.settings.mode === "textToSpeech") {
+			soundSettings.sound_mode = "speech";
+			soundSettings.message = action.settings.message;
+			soundSettings.volume = action.settings.volume;
+		}
+		return soundSettings;
+	},
+
+		set_light: function(action) {
+		var soundSettings = {};
+		if (action.settings.mode === "playTone") {
+			soundSettings.sound_mode = "tone";
+			soundSettings.frequency = action.settings.frequency;
+			soundSettings.volume = action.settings.volume;
+			soundSettings.duration = action.settings.duration;
+		}
+		else if (action.settings.mode === "playNote") {
+			soundSettings.sound_mode = "note";
+			soundSettings.note = action.settings.note;
+			soundSettings.octave = action.settings.octave;
+			soundSettings.volume = action.settings.volume;
+			soundSettings.duration =  action.settings.duration;
+		}
+		else if (action.settings.mode === "playFile") {
+			soundSettings.sound_mode = "file";
+			soundSettings.filename = action.settings.filename;
+			soundSettings.volume = action.settings.volume;
+		}
+		else if (action.settings.mode === "textToSpeech") {
+			soundSettings.sound_mode = "speech";
+			soundSettings.message = action.settings.message;
+			soundSettings.volume = action.settings.volume;
+		}
+		return soundSettings;
+	},
+
+	set_light: function(action) {
+		var lightSettings = {};
+		if (action.settings.mode === "lightOn"){
+			lightSettings.led_mode = "on";
+			lightSettings.brick_lights = "both"; // the ev3 can handle different colors at the same time, to include that, encorporate "right" and "left" as options in the interface
+			lightSettings.color = action.settings.color;
+		}
+		else if (action.settings.mode === "lightOff") {
+			lightSettings.led_mode = "off";
+		}
+		return lightSettings;
+	},
 }

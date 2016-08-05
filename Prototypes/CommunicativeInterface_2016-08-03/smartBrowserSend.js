@@ -54,7 +54,7 @@ function makeCorsRequest(url, data, index, isStart) {
 			//console.log("\t\tcallback FCN://\tGET response: " + response.value +" received with code: " + response.httpCode);
 			document.getElementById("response_log").innerHTML = JSON.stringify(response);// log response in the response_log div
 
-			if (firstIter) { // if first time contacting EV3, just add the requested value to lastValues object
+			if (firstIter && response.value != "program start") { // if first time contacting EV3, just add the requested value to lastValues object
 				modelParse.lastValues[modelParse.triggerList[triggerIndex].channel] = response.value; // lastValues object is indexed by port name.
 				//console.log(modelParse.lastValues[modelParse.triggerList[triggerIndex].port])
 			} 
