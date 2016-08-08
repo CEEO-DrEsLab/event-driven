@@ -17,7 +17,7 @@
             "note": "C",
             "octave": 1,
             "volume": 50,
-            "duration": 1,
+            "duration": 400,
             "frequency": 261.65
           }
         },
@@ -41,7 +41,7 @@
             "note": "E",
             "octave": 1,
             "volume": 50,
-            "duration": 1,
+            "duration": 400,
             "frequency": 327.05
           }
         },
@@ -65,7 +65,7 @@
             "note": "G",
             "octave": 1,
             "volume": 50,
-            "duration": 1,
+            "duration": 400,
             "frequency": 392.45
           }
         },
@@ -89,7 +89,7 @@
             "note": "C",
             "octave": 2,
             "volume": 50,
-            "duration": 1,
+            "duration": 400,
             "frequency": 523.25
           }
         },
