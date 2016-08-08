@@ -1,7 +1,7 @@
 
 // Event-Driven EV3 Data Parser: CORS
 // By: Benjamin Zackin
-// Last Modified: 8/3/16
+// Last Modified: 8/8/16
 // Notes:   Loops through all triggers checking if a state change occurred.
 // 				If a state change occurs, sets all the corresponding actions
 //			Added object wrapper to this file.  All functions in this file
@@ -30,11 +30,11 @@ var modelParse = {
 	//			-Sending HTTP requests to retrieve input values and execute output actions.
 	//
 	parse_data: function (dataFile) { 
-		console.log(dataFile);
+		//console.log(dataFile);
 		//Start Data Parsing
 		var data = JSON.parse(dataFile);
-		console.log(data);
-		console.log("parse_data Fcn://\tJSON parsed to variable 'data'");
+		//console.log(data);
+		//console.log("parse_data Fcn://\tJSON parsed to variable 'data'");
 		var raw_config = data.portConfig;
 		//for (var d = 0; d < data.triggers.length; d++) {};
 		this.triggerList = data.triggers;
@@ -57,25 +57,25 @@ var modelParse = {
 					}
 				}
 			}
-			if (this.triggerList[triggerIndex].channel === "program") {
-				this.send_set(this.triggerList[triggerIndex].actions); // loop through the outputs for that state change and send set requests for all of them
+			if (this.triggerList[i].channel === "program") {
+				this.send_set(this.triggerList[i].actions); // loop through the outputs for that state change and send set requests for all of them
 			}
 			this.send_get(this.triggerList[i], i, true);
 		}
 		//console.log("parse_data Fcn://\tstart values for all triggers set");
 		var j = 0;
 		delayedLoop = setInterval(function(){ 
-			console.log("parse_data Fcn://\t delayed loop entered, iteration: " + j);
+			//console.log("parse_data Fcn://\t delayed loop entered, iteration: " + j);
 
 			if(j < trigger_len) {
 			 	//console.log("parse_data Fcn://\t about to send get for trigger #: " + j);
 				modelParse.send_get(modelParse.triggerList[j], j, false);
-				console.log("parse_data Fcn://\tget sent for peripheral #: " + j + " type: " + modelParse.triggerList[j].channel);
+				//console.log("parse_data Fcn://\tget sent for peripheral #: " + j + " type: " + modelParse.triggerList[j].channel);
 				j++;
 			} else {
 				j = 0;
 			}
-		}, 1000);
+		}, 400);
 	},
 
 	// handleStop()
@@ -86,7 +86,7 @@ var modelParse = {
 	//			
 	handleStop: function () { // not currently working.
 			// stop all EV3 motors
-			makeCorsRequest(modelParse.url,'{"status":"set","io_type":"large motor","port":"outA","info":"stop all","value":"coast"}', 0, false);
+			makeCorsRequest(modelParse.url,'{"status":"set","io_type":"stop all"}', 0, false);
 			
 			 // stop trigger scanning loop
 			clearInterval(delayedLoop);
@@ -101,31 +101,46 @@ var modelParse = {
 	//			-Implement state change detection for all GrovePI inputs
 	//
 	is_state_change: function(response, thisTrigger, lastVal) {
+		//console.log("trigger is: ");
+		//console.log(thisTrigger);
+		//console.log("last value: " + lastVal);
 		if (response === "program start"){
 			return false;
 		}
-		if ((thisTrigger.mode === "press") && (lastVal != response) && (response === 1)) { // if current button state is different from last state and is now pressed
-			console.log("is_state_change Fcn://\t button press state change detected");
-			return true;
+		else if (thisTrigger.mode === "press") { // if current button state is different from last state and is now pressed
+			if ((lastVal != response) && (response == 1)) {
+				//console.log("is_state_change Fcn://\t button press state change detected");
+				return true;
+			}
 		}
-		else if ((thisTrigger.mode === "release") && (lastVal != response) && (response === 0)) { // if current button state is different from last state and is now released
-			console.log("is_state_change Fcn://\t button release state change detected");
-			return true;
+		else if (thisTrigger.mode === "release") { // if current button state is different from last state and is now released
+			if ((lastVal != response) && (response == 0)) {
+				//console.log("is_state_change Fcn://\t button release state change detected");
+				return true;
+			}
 		}
-		else if ((thisTrigger.mode === "switchColor") && (thisTrigger.settings.transitionType === "to") && (lastVal != response) && (response === thisTrigger.settings.color)) {
-			return true;
+		else if (thisTrigger.mode === "switchColor") {
+			 if((thisTrigger.settings.transitionType === "to") && (lastVal != response) && (response == thisTrigger.settings.color)) {
+				return true;
+			}
+			else if ((thisTrigger.settings.transitionType === "from") && (lastVal == response) && (response != thisTrigger.settings.color)) {
+				return true;
+			}
 		}
-		else if ((thisTrigger.mode === "switchColor") && (thisTrigger.settings.transitionType === "from") && (lastVal === response) && (response != thisTrigger.settings.color)) {
-			return true;
+		else if (thisTrigger.mode === "countExceeds") {
+			if ((lastVal < parseThreshold(thisTrigger.settings.threshold)) && (response >= parseThreshold(thisTrigger.settings.threshold))) {
+				return true;
+			}
 		}
-		else if ((thisTrigger.mode === "countExceeds") && (lastVal < parseThreshold(thisTrigger.settings.threshold)) && (response >= parseThreshold(thisTrigger.settings.threshold))) {
-			return true;
+		else if (this.detect_comparison(thisTrigger.settings.comparisonType) === "passes above") {
+			if ((lastVal < parseThreshold(thisTrigger.settings.threshold)) && (response >= parseThreshold(thisTrigger.settings.threshold))) {
+				return true;
+			}
 		}
-		else if ((this.detect_comparison(thisTrigger.settings.comparisonType) === "passes above") && (lastVal < parseThreshold(thisTrigger.settings.threshold) && (response >= parseThreshold(thisTrigger.settings.threshold))) {
-			return true;
-		}
-		else if ((this.detect_comparison(thisTrigger.settings.comparisonType) === "passes below") && (lastVal > parseThreshold(thisTrigger.settings.threshold)) && (response <= parseThreshold(thisTrigger.settings.threshold))) {
-			return true;
+		else if (this.detect_comparison(thisTrigger.settings.comparisonType) === "passes below") {
+			if ((lastVal > parseThreshold(thisTrigger.settings.threshold)) && (response <= parseThreshold(thisTrigger.settings.threshold))) {
+				return true;
+			}
 		}
 
 		/* FORMAT:
@@ -133,19 +148,18 @@ var modelParse = {
 			return true;
 		}
 		*/
-		else { // if no state change detected
-			return false;
-		}
+		// if no state change detected
+		return false;
 	},
 
 	parseThreshold: function(threshold) {
-		if (threshold ==== "dark") {
+		if (threshold === "dark") {
 			return 30;
 		}
-		else if (threshold ==== "dim") {
+		else if (threshold === "dim") {
 			return 45;
 		}
-		else if (threshold ==== "bright") {
+		else if (threshold === "bright") {
 			return 60;
 		} 
 		return threshold;
@@ -159,38 +173,6 @@ var modelParse = {
 			return "passes below";
 		}
 	},
-
-	// send_get()
-	//		'get' instruction assembly and sending function
-	//		Constructs 'get' instruction object as a JSON formatted string and 
-	//			sends it via HTTP POST request using the 'makeCorsRequest()' function.
-	//		Currently is only configured for interactions with the EV3.
-	//		TODO:
-	//			-Add port and peripheral name mapping for the GrovePI.
-	//			-Handle sending to different url's 
-	//				(we probably need to store the URL for each connected device with its
-	//					corresponding triggers so we can dynamically handle multiple devices)
-	//
-	send_get: function(trig,index,isFirst) {
-		/*SEND A REQUEST WITH:*/
-		var getInstruction = {};
-		getInstruction.status = "get";
-		getInstruction.io_type = this.parse_name(trigger.channel);
-		getInstruction.port = this.parse_port(trigger.port);
-		getInstruction.settings = access_io_builder(trig);
-
-
-		console.log("-------------------------------------------------------");
-		console.log(getInstruction); // print the get instruction to the console
-
-		/*****************PSEUDOCODE, NOT IMPLEMENTED YET!**********************
-		// var destinationURL = trig.deviceURL; // maybe adding a field to each trigger encoding the URL of the device it goes with could be used to allow multi-device handling.
-		//										// you could then pass in 'destinationURL' instead of the hard coded 'this.url' to the 'makeCorsRequest()' function to send to whichever device you want.
-		***************************END PSEUDOCODE*******************************/
-
-		makeCorsRequest(this.url,JSON.stringify(getInstruction),index,isFirst); // send the 'get' instruction via HTTP POST request
-	},
-
 
 	// Dictionary object for parsing the port names to a EV3-recognizable format.
 	// 		TODO:
@@ -233,171 +215,50 @@ var modelParse = {
 		"ev3BrickLight":"led",
 		"ev3BrickSound":"sound",
 		"ev3LargeMotor":"large motor",
-		"ev3MediumMotor":"medium motor"
+		"ev3MediumMotor":"medium motor",
 		"program":"stop all"
 	},
 
 	// parse_name()
 	//		Function uses the 'parseNameTranslations' object to map the EV3 peripheral names.
+	//		All name outputs of the 'parseNameTranslations' dictionary must match the channel names used to call the get and set functions used here.
 	//
 	parse_name: function(io_type) {
 		return this.parseNameTranslations[io_type];
 	},
 
-	access_io_builder: function(io_object, status, channel) {
-		return this.ioBuilderFunctions[io_object.status][io_object.channel](io_object);
+
+	// send_get()
+	//		'get' instruction assembly and sending function
+	//		Constructs 'get' instruction object as a JSON formatted string and 
+	//			sends it via HTTP POST request using the 'makeCorsRequest()' function.
+	//		Currently is only configured for interactions with the EV3.
+	//		TODO:
+	//			-Add port and peripheral name mapping for the GrovePI.
+	//			-Handle sending to different url's 
+	//				(we probably need to store the URL for each connected device with its
+	//					corresponding triggers so we can dynamically handle multiple devices)
+	//
+	send_get: function(trig,index,isFirst) {
+		/*SEND A REQUEST WITH:*/
+		var getInstruction = {};
+		getInstruction.status = "get";
+		getInstruction.io_type = this.parse_name(trig.channel);
+		getInstruction.port = this.parse_port(trig.port);
+		getInstruction.settings = this.access_io_builder("get",trig);
+
+
+		//console.log("-------------------------------------------------------");
+		//console.log(getInstruction); // print the get instruction to the console
+
+		/*****************PSEUDOCODE, NOT IMPLEMENTED YET!**********************
+		// var destinationURL = trig.deviceURL; // maybe adding a field to each trigger encoding the URL of the device it goes with could be used to allow multi-device handling.
+		//										// you could then pass in 'destinationURL' instead of the hard coded 'this.url' to the 'makeCorsRequest()' function to send to whichever device you want.
+		***************************END PSEUDOCODE*******************************/
+
+		makeCorsRequest(this.url,JSON.stringify(getInstruction),index,isFirst); // send the 'get' instruction via HTTP POST request
 	},
 
-	ioBuilderFunctions = {
-		"get": {
-			"Touch Sensor": this.get_touch,
-			"Ultrasonic Sensor": this.get_ultrasonic,
-			"Color Sensor": this.get_color,
-			"Gyro Sensor": this.get_gyro,
-			"Large Motor": this.get_l_motor,
-			"Medium Motor": this.get_m_motor,
-			//"Infrared Sensor": this.get_infrared,
-			"Brick Button": this.get_brick_button
-		},
-		"set": {
-			"Program": this.program_stop,
-			"Large Motor": this.set_l_motor,
-			"Medium Motor": this.set_m_motor,
-			"Brick Sound": this.set_sound,
-			"Brick Light": this.set_light
-		}
-	},
-
-	get_touch: function(trigger) {
-		var touchSettings = {};
-		if (trigger.settings.mode === "press" || trigger.settings.mode === "release") {
-			touchSettings.touch_mode = "raw_touch";
-		}
-		else if (trigger.settings.mode === "countExceeds") {
-			touchSettings.touch_mode = "count";
-		}
-		return touchSettings;
-	},
-
-	get_ultrasonic: function(trigger) {
-		var ultrasonicSettings = {};
-		if (trigger.settings.mode === "distancePasses") {
-			ultrasonicSettings.us_mode = "distance";
-
-			if (trigger.settings.units === "inches") {
-				ultrasonicSettings.units = "in";
-			}
-			else if (trigger.settings.units === "centimeters") {
-				ultrasonicSettings.units = "cm";
-			}
-		}
-		return ultrasonicSettings;
-	},
-
-	get_color: function(trigger) {
-		var colorSettings = {};
-		if (trigger.settings.mode === "switchColor") {
-			colorSettings.color_mode = "color";
-		}
-		else if (trigger.settings.mode === "reflectedLightPasses") {
-			colorSettings.color_mode = "reflected";
-		}
-		else if (trigger.settings.mode === "ambientLightPasses") {
-			colorSettings.color_mode = "ambient";
-		}
-		else if (trigger.settings.mode === "rgbValuePasses") {
-			colorSettings.color_mode ="rgb_raw";
-		}
-		return colorSettings;
-	},
-
-	get_gyro: function(trigger) {
-		var gyroSettings = {};
-		if (trigger.settings.mode === "positionPasses") {
-			gyroSettings.gyro_mode = "position";
-
-			if (trigger.settings.units === "degrees") {
-				gyroSettings.units = "deg";
-			}
-			else if (trigger.settings.units === "rotations") {
-				gyroSettings.units = "rot";
-			}
-		}
-		else if (trigger.settings.mode === "ratePasses") {
-			gyroSettings.gyro_mode = "rate";
-
-			if (trigger.settings.units === "deg/sec") {
-				gyroSettings.units = "deg_per_sec";
-			}
-			else if (trigger.settings.units === "rot/sec") {
-				gyroSettings.units = "rot_per_sec";
-			}
-		}
-		return gyroSettings;
-	},
-
-	get_l_motor: function(trigger) {
-		var lMotorSettings = {};
-		if (trigger.settings.mode === "positionPasses") {
-			lMotorSettings.motor_mode = "position";
-
-			if (trigger.settings.units === "degrees") {
-				lMotorSettings.units = "deg";
-			}
-			else if (trigger.settings.units === "rotations") {
-				lMotorSettings.units = "rot";
-			}
-		}
-		else if (trigger.settings.mode === "ratePasses") {
-			lMotorSettings.motor_mode = "rate";
-
-			if (trigger.settings.units === "deg/sec") {
-				lMotorSettings.units = "deg_per_sec";
-			}
-			else if (trigger.settings.units === "rot/sec") {
-				lMotorSettings.units = "rot_per_sec";
-			}
-		}
-		return lMotorSettings;
-	},
-
-	get_m_motor: function(trigger) {
-		var mMotorSettings = {};
-		if (trigger.settings.mode === "positionPasses") {
-			mMotorSettings.motor_mode = "position";
-
-			if (trigger.settings.units === "degrees") {
-				mMotorSettings.units = "deg";
-			}
-			else if (trigger.settings.units === "rotations") {
-				mMotorSettings.units = "rot";
-			}
-		}
-		else if (trigger.settings.mode === "ratePasses") {
-			mMotorSettings.motor_mode = "rate";
-
-			if (trigger.settings.units === "deg/sec") {
-				mMotorSettings.units = "deg_per_sec";
-			}
-			else if (trigger.settings.units === "rot/sec") {
-				mMotorSettings.units = "rot_per_sec";
-			}
-		}
-		return mMotorSettings;
-	},
-
-	get_brick_button: function(trigger) {
-		var brickButtonSettings = {};
-		if (trigger.settings.mode === "press" || trigger.settings.mode === "release") {
-			brickButtonSettings.touch_mode = "raw_touch";
-			brickButtonSettings.button = trigger.settings.button;
-		}
-		else if (trigger.settings.mode === "countExceeds") {
-			brickButtonSettings.touch_mode = "count";
-			brickButtonSettings.button = trigger.settings.button;
-		}
-		return brickButtonSettings;
-	},
 
 	// send_set()
 	//		'set' instruction assembly and sending function
@@ -418,7 +279,7 @@ var modelParse = {
 			setInstruction.status = "set";
 			setInstruction.io_type = this.parse_name(action_arr[k].channel);
 			setInstruction.port = this.parse_port(action_arr[k].port);
-			setInstruction.settings = access_io_builder(action_arr[k]);
+			setInstruction.settings = this.access_io_builder("set",action_arr[k]);
 
 			console.log("-------------------------------------------------------");
 			console.log(setInstruction); // print the set instruction to the console
@@ -432,131 +293,239 @@ var modelParse = {
 		}
 	},
 
-	set_l_motor: function(action) {
-		var lMotorSettings = {};
-		var sign = {
-			"forward": 1,
-			"backward": -1
-		};
-		var powerLevel = {
-			"high": 100,
-			"medium": 66,
-			"low": 33
-		};
+	ioBuilderFunctions: {
+		"get": {
+			"touch": function(trigger) { // this.get_touch
+				var touchSettings = {};
+				if (trigger.mode === "press" || trigger.mode === "release") {
+					touchSettings.touch_mode = "raw_touch";
+				}
+				else if (trigger.mode === "countExceeds") {
+					touchSettings.touch_mode = "count";
+				}
+				return touchSettings;
+			},
+			"ultrasonic": function(trigger) { //this.get_ultrasonic
+				var ultrasonicSettings = {};
+				if (trigger.mode === "distancePasses") {
+					ultrasonicSettings.us_mode = "distance";
 
-		if (action.settings.mode === "start") {
-			lMotorSettings.motor_mode = "run_forever";
-			lMotorSettings.power = powerLevel[action.settings.power] * sign[action.settings.direction];
+					if (trigger.settings.units === "inches") {
+						ultrasonicSettings.units = "in";
+					}
+					else if (trigger.settings.units === "centimeters") {
+						ultrasonicSettings.units = "cm";
+					}
+				}
+				return ultrasonicSettings;
+			},
+			"color": function(trigger) { //this.get_color
+				var colorSettings = {};
+				if (trigger.mode === "switchColor") {
+					colorSettings.color_mode = "color";
+				}
+				else if (trigger.mode === "reflectedLightPasses") {
+					colorSettings.color_mode = "reflected";
+				}
+				else if (trigger.mode === "ambientLightPasses") {
+					colorSettings.color_mode = "ambient";
+				}
+				else if (trigger.mode === "rgbValuePasses") {
+					colorSettings.color_mode ="rgb_raw";
+				}
+				return colorSettings;
+			},
+			"gyro": function(trigger) { //this.get_gyro
+				var gyroSettings = {};
+				if (trigger.mode === "positionPasses") {
+					gyroSettings.gyro_mode = "position";
+
+					if (trigger.settings.units === "degrees") {
+						gyroSettings.units = "deg";
+					}
+					else if (trigger.settings.units === "rotations") {
+						gyroSettings.units = "rot";
+					}
+				}
+				else if (trigger.mode === "ratePasses") {
+					gyroSettings.gyro_mode = "rate";
+
+					if (trigger.settings.units === "deg/sec") {
+						gyroSettings.units = "deg_per_sec";
+					}
+					else if (trigger.settings.units === "rot/sec") {
+						gyroSettings.units = "rot_per_sec";
+					}
+				}
+				return gyroSettings;
+			},
+			"large motor": function(trigger) { //this.get_l_motor
+				var lMotorSettings = {};
+				if (trigger.mode === "positionPasses") {
+					lMotorSettings.motor_mode = "position";
+
+					if (trigger.settings.units === "degrees") {
+						lMotorSettings.units = "deg";
+					}
+					else if (trigger.settings.units === "rotations") {
+						lMotorSettings.units = "rot";
+					}
+				}
+				else if (trigger.mode === "ratePasses") {
+					lMotorSettings.motor_mode = "rate";
+
+					if (trigger.settings.units === "deg/sec") {
+						lMotorSettings.units = "deg_per_sec";
+					}
+					else if (trigger.settings.units === "rot/sec") {
+						lMotorSettings.units = "rot_per_sec";
+					}
+				}
+				return lMotorSettings;
+			},
+			"medium motor": function(trigger) { //this.get_m_motor,
+				var mMotorSettings = {};
+				if (trigger.mode === "positionPasses") {
+					mMotorSettings.motor_mode = "position";
+
+					if (trigger.settings.units === "degrees") {
+						mMotorSettings.units = "deg";
+					}
+					else if (trigger.settings.units === "rotations") {
+						mMotorSettings.units = "rot";
+					}
+				}
+				else if (trigger.mode === "ratePasses") {
+					mMotorSettings.motor_mode = "rate";
+
+					if (trigger.settings.units === "deg/sec") {
+						mMotorSettings.units = "deg_per_sec";
+					}
+					else if (trigger.settings.units === "rot/sec") {
+						mMotorSettings.units = "rot_per_sec";
+					}
+				}
+				return mMotorSettings;
+			},
+			//"infrared": function(trigger) //this.get_infrared 
+			"nav button": function(trigger) { //this.get_brick_button
+				var brickButtonSettings = {};
+				if (trigger.mode === "press" || trigger.mode === "release") {
+					brickButtonSettings.touch_mode = "raw_touch";
+					brickButtonSettings.button = trigger.settings.button;
+				}
+				else if (trigger.mode === "countExceeds") {
+					brickButtonSettings.touch_mode = "count";
+					brickButtonSettings.button = trigger.settings.button;
+				}
+				return brickButtonSettings;
+			},
+		},
+		"set": {
+			"large motor": function(action) { //this.set_l_motor,
+				var lMotorSettings = {};
+				var sign = {
+					"forward": 1,
+					"backward": -1
+				};
+				var powerLevel = {
+					"high": 100,
+					"medium": 66,
+					"low": 33
+				};
+
+				if (action.mode === "start") {
+					lMotorSettings.motor_mode = "run forever";
+					lMotorSettings.power = powerLevel[action.settings.power] * sign[action.settings.direction];
+				}
+				else if (action.mode === "switchDirection") {
+					lMotorSettings.motor_mode === "switch";
+				}
+				else if (action.mode === "stop") {
+					lMotorSettings.motor_mode = "stop";
+					lMotorSettings.stop_type = action.settings.stopType;
+				}
+				else if (action.mode === "resetEncoders") {
+					lMotorSettings.motor_mode = "reset"; // Not yet implemented on EV3
+				}
+				return lMotorSettings;
+			},
+			"medium motor": function(action) { //this.set_m_motor,
+				var mMotorSettings = {};
+				var sign = {
+					"forward": 1,
+					"backward": -1
+				};
+				var powerLevel = {
+					"high": 100,
+					"medium": 66,
+					"low": 33
+				};
+
+				if (action.mode === "start") {
+					mMotorSettings.motor_mode = "run forever";
+					mMotorSettings.power = powerLevel[action.settings.power] * sign[action.settings.direction];
+				}
+				else if (action.mode === "switchDirection") {
+					mMotorSettings.motor_mode === "switch";
+				}
+				else if (action.mode === "stop") {
+					mMotorSettings.motor_mode = "stop";
+					mMotorSettings.stop_type = action.settings.stopType;
+				}
+				else if (action.mode === "resetEncoders") {
+					mMotorSettings.motor_mode = "reset"; // Not yet implemented on EV3
+				}
+				return mMotorSettings;
+			},
+			"sound": function(action) { //this.set_sound
+				var soundSettings = {};
+				if (action.mode === "playTone") {
+					soundSettings.sound_mode = "tone";
+					soundSettings.frequency = action.settings.frequency;
+					soundSettings.volume = action.settings.volume;
+					soundSettings.duration = action.settings.duration;
+				}
+				else if (action.mode === "playNote") {
+					soundSettings.sound_mode = "note";
+					soundSettings.note = action.settings.note;
+					soundSettings.octave = action.settings.octave;
+					soundSettings.volume = action.settings.volume;
+					soundSettings.duration =  action.settings.duration;
+				}
+				else if (action.mode === "playFile") {
+					soundSettings.sound_mode = "file";
+					soundSettings.filename = action.settings.filename;
+					soundSettings.volume = action.settings.volume;
+				}
+				else if (action.settings.mode === "textToSpeech") {
+					soundSettings.sound_mode = "speech";
+					soundSettings.message = action.settings.message;
+					soundSettings.volume = action.settings.volume;
+				}
+				return soundSettings;
+			},
+			"led": function(action) { // this.get_led
+				var lightSettings = {};
+				if (action.mode === "lightOn"){
+					lightSettings.led_mode = "on";
+					lightSettings.brick_lights = "both"; // the ev3 can handle different colors at the same time, to include that, encorporate "right" and "left" as options in the interface
+					lightSettings.color = action.settings.color;
+				}
+				else if (action.mode === "lightOff") {
+					lightSettings.led_mode = "off";
+				}
+				return lightSettings;
+			}
 		}
-		else if (action.settings.mode === "switchDirection") {
-			lMotorSettings.motor_mode === "switch";
-		}
-		else if (action.settings.mode === "stop") {
-			lMotorSettings.motor_mode = "stop";
-			lMotorSettings.stop_type = action.settings.stopType;
-		}
-		else if (action.settings.mode === "resetEncoders") {
-			lMotorSettings.motor_mode = "reset"; // Not yet implemented on EV3
-		}
-		return lMotorSettings;
 	},
 
-	set_m_motor: function(action) {
-		var mMotorSettings = {};
-		var sign = {
-			"forward": 1,
-			"backward": -1
-		};
-		var powerLevel = {
-			"high": 100,
-			"medium": 66,
-			"low": 33
-		};
-
-		if (action.settings.mode === "start") {
-			mMotorSettings.motor_mode = "run_forever";
-			mMotorSettings.power = powerLevel[action.settings.power] * sign[action.settings.direction];
-		}
-		else if (action.settings.mode === "switchDirection") {
-			mMotorSettings.motor_mode === "switch";
-		}
-		else if (action.settings.mode === "stop") {
-			mMotorSettings.motor_mode = "stop";
-			mMotorSettings.stop_type = action.settings.stopType;
-		}
-		else if (action.settings.mode === "resetEncoders") {
-			mMotorSettings.motor_mode = "reset"; // Not yet implemented on EV3
-		}
-		return mMotorSettings;
-	},
-
-
-	set_sound: function(action) {
-		var soundSettings = {};
-		if (action.settings.mode === "playTone") {
-			soundSettings.sound_mode = "tone";
-			soundSettings.frequency = action.settings.frequency;
-			soundSettings.volume = action.settings.volume;
-			soundSettings.duration = action.settings.duration;
-		}
-		else if (action.settings.mode === "playNote") {
-			soundSettings.sound_mode = "note";
-			soundSettings.note = action.settings.note;
-			soundSettings.octave = action.settings.octave;
-			soundSettings.volume = action.settings.volume;
-			soundSettings.duration =  action.settings.duration;
-		}
-		else if (action.settings.mode === "playFile") {
-			soundSettings.sound_mode = "file";
-			soundSettings.filename = action.settings.filename;
-			soundSettings.volume = action.settings.volume;
-		}
-		else if (action.settings.mode === "textToSpeech") {
-			soundSettings.sound_mode = "speech";
-			soundSettings.message = action.settings.message;
-			soundSettings.volume = action.settings.volume;
-		}
-		return soundSettings;
-	},
-
-		set_light: function(action) {
-		var soundSettings = {};
-		if (action.settings.mode === "playTone") {
-			soundSettings.sound_mode = "tone";
-			soundSettings.frequency = action.settings.frequency;
-			soundSettings.volume = action.settings.volume;
-			soundSettings.duration = action.settings.duration;
-		}
-		else if (action.settings.mode === "playNote") {
-			soundSettings.sound_mode = "note";
-			soundSettings.note = action.settings.note;
-			soundSettings.octave = action.settings.octave;
-			soundSettings.volume = action.settings.volume;
-			soundSettings.duration =  action.settings.duration;
-		}
-		else if (action.settings.mode === "playFile") {
-			soundSettings.sound_mode = "file";
-			soundSettings.filename = action.settings.filename;
-			soundSettings.volume = action.settings.volume;
-		}
-		else if (action.settings.mode === "textToSpeech") {
-			soundSettings.sound_mode = "speech";
-			soundSettings.message = action.settings.message;
-			soundSettings.volume = action.settings.volume;
-		}
-		return soundSettings;
-	},
-
-	set_light: function(action) {
-		var lightSettings = {};
-		if (action.settings.mode === "lightOn"){
-			lightSettings.led_mode = "on";
-			lightSettings.brick_lights = "both"; // the ev3 can handle different colors at the same time, to include that, encorporate "right" and "left" as options in the interface
-			lightSettings.color = action.settings.color;
-		}
-		else if (action.settings.mode === "lightOff") {
-			lightSettings.led_mode = "off";
-		}
-		return lightSettings;
-	},
-}
+	access_io_builder: function(status, io_object) {
+		//console.log("status is: " + status);
+		//console.log("io_object channel is: ");
+		//console.log(this.parse_name(io_object.channel));
+		//console.log("ioBuilderFunction Dictionary is: ");
+		//console.log(this.ioBuilderFunctions[status][this.parse_name(io_object.channel)]);
+		return this.ioBuilderFunctions[status][this.parse_name(io_object.channel)](io_object);
+	}
+};
