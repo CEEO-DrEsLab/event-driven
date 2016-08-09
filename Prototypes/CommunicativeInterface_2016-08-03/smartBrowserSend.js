@@ -1,6 +1,6 @@
 // Smart Browser Sending Script
 // By: Benjamin Zackin
-// Last Modified: 8/8/16
+// Last Modified: 8/9/16
 // Notes: Handles HTTP request sending and response handling for the Smart Browser setup
 //
 
@@ -38,12 +38,12 @@ function makeCorsRequest(url, data, index, isStart) {
 	}
 
 	// manage callbacks from EV3, test for state change, and if a state changed, request the corresponding actions
-	function callback(response,triggerIndex,firstIter) {
+	function callback(response,arr_Index,firstIter) {
 		//console.log('\t\tcallback FCN://\t' + JSON.stringify(response)); // print out the response to the console
-		if (response.value == "Not found") { // response value for invalid instruction format
-
+		if (response.value == "Not found") { 
+			// response value for invalid instruction format
 		}
-		else if (response.value == "none") { // response value for successful set instruction.
+		else if (response.value == "none") { // response if missing return value on EV3 side
 			//console.log(JSON.stringify(response)); // log response
 		}
 		else if (response.value == 'successful set') {
@@ -56,38 +56,50 @@ function makeCorsRequest(url, data, index, isStart) {
 
 			if (firstIter) { // if first time contacting EV3, just add the requested value to lastValues object
 				if (response.value != "program start") {
-					modelParse.lastValues[modelParse.triggerList[triggerIndex].port] = response.value; // lastValues object is indexed by port name.
-					//console.log(modelParse.lastValues[modelParse.triggerList[triggerIndex].port])
+					modelParse.lastValues[modelParse.triggerList[arr_Index].port] = response.value; // lastValues object is indexed by port name.
+					//console.log(modelParse.lastValues[modelParse.triggerList[arr_Index].port])
 				}
 			} 
-			else if (modelParse.is_state_change(response.value, modelParse.triggerList[triggerIndex], modelParse.lastValues[modelParse.triggerList[triggerIndex].port])) {
+			else if (modelParse.is_state_change(response.value, modelParse.triggerList[arr_Index], modelParse.lastValues[modelParse.triggerList[arr_Index].port])) {
 				// if not first time contacting the EV3, check if the value has broken the designated threshold
 
-				modelParse.lastValues[modelParse.triggerList[triggerIndex].port] = response.value; // if a state change occurs, change the last value to be the current value.
-				modelParse.send_set(modelParse.triggerList[triggerIndex].actions); // loop through the outputs for that state change and send set requests for all of them
+				modelParse.lastValues[modelParse.triggerList[arr_Index].port] = response.value; // if a state change occurs, change the last value to be the current value.
+				modelParse.send_set(modelParse.triggerList[arr_Index].actions); // loop through the outputs for that state change and send set requests for all of them
 
 			}
 			else { // if no state change detected, do nothing
-				modelParse.lastValues[modelParse.triggerList[triggerIndex].port] = response.value; // if a state change occurs, change the last value to be the current value.
+				modelParse.lastValues[modelParse.triggerList[arr_Index].port] = response.value; // if a state change occurs, change the last value to be the current value.
 
-				// console.log("\t\tcallback FCN://\t No state change detected in trigger #: " + triggerIndex);
+				// console.log("\t\tcallback FCN://\t No state change detected in trigger #: " + arr_Index);
 			}
 		}
 	}
 
 	// Response handlers.
 	xhr.onload = function() { // asynchronous event fires when HTTP request send is successful
+		console.log ("status is: " + data.status);
+		if (data.status === "get") {
+			modelParse.triggerList[index].requestPending = false;
+		}
 		callback(JSON.parse(xhr.responseText),index,isStart); // callback function handles state change checking and response_log updates
+		console.log("requestPending status is now: " + modelParse.triggerList[index].requestPending);
+
 		//console.log("\txhr.onload EVENT://\t Request successfully sent.");
 		//var endTime = Date.now(); // timestamp at end of send, used to compute total HTTP send latency
 		//console.log("\txhr.onload EVENT://\tmessage sent in: " + (endTime - startTime) + " msec"); // log elapsed send time
 	};
 	xhr.onerror = function() { // asynchronous event fires when HTTP request fails
+		console.log ("status is: " + data.status);
+		if (data.status === "get") {
+			modelParse.triggerList[index].requestPending = false;
+		}
+		console.log("requestPending status is now: " + modelParse.triggerList[index].requestPending);
+
 		//console.log('\txhr.onerror EVENT://\tWoops, there was an error making the request.');
 		//var endTime = Date.now(); // timestamp at end of send, used to compute total HTTP send latency
 		//console.log("\txhr.onerror EVENT://\tmessage sent in: " + (endTime - startTime) + " msec"); // log elapsed send time
 	};
 
-	xhr.send(data); // send the HTTP request
+	xhr.send(JSON.stringify(data)); // send the HTTP request
 	//console.log("makeCorsRequest FCN://\t CORS Request Sent.");
 }

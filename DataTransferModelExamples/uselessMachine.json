@@ -14,7 +14,7 @@
           "mode": "start",
           "settings": {
             "direction": "forward",
-            "power": "high"
+            "power": "medium"
           }
         }
       ]

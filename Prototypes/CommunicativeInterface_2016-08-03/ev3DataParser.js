@@ -1,7 +1,7 @@
 
 // Event-Driven EV3 Data Parser: CORS
 // By: Benjamin Zackin
-// Last Modified: 8/8/16
+// Last Modified: 8/9/16
 // Notes:   Loops through all triggers checking if a state change occurred.
 // 				If a state change occurs, sets all the corresponding actions
 //			Added object wrapper to this file.  All functions in this file
@@ -50,6 +50,7 @@ var modelParse = {
 		for(var i = 0; i < trigger_len; i++) {
 			if (!this.triggerList[i].channel) {
 				this.triggerList[i].channel = this.config[this.triggerList[i].port];
+				this.triggerList[i].requestPending = false; // initialize request pending field for all triggers to false
 			}
 			if (this.triggerList[i].actions) {
 				for (var numActs = 0; numActs < this.triggerList[i].actions.length; numActs++){
@@ -70,7 +71,12 @@ var modelParse = {
 
 			if(j < trigger_len) {
 			 	//console.log("parse_data Fcn://\t about to send get for trigger #: " + j);
-				modelParse.send_get(modelParse.triggerList[j], j, false);
+			 	console.log("requestPending status is: " + modelParse.triggerList[j].requestPending);
+			 	console.log("for device in port: " + modelParse.triggerList[j].port);
+				if (!modelParse.triggerList[j].requestPending) {
+					modelParse.triggerList[j].requestPending = true; // set the pending variable to true for this trigger (ok to do this here b/c pass by reference)
+					modelParse.send_get(modelParse.triggerList[j], j, false);
+				}
 				//console.log("parse_data Fcn://\tget sent for peripheral #: " + j + " type: " + modelParse.triggerList[j].channel);
 				j++;
 			} else {
@@ -87,7 +93,7 @@ var modelParse = {
 	//			
 	handleStop: function () { // not currently working.
 			// stop all EV3 motors
-			makeCorsRequest(modelParse.url,'{"status":"set","io_type":"stop all"}', 0, false);
+			makeCorsRequest(modelParse.url,{"status":"set","io_type":"stop all"}, 0, false);
 			
 			 // stop trigger scanning loop
 			clearInterval(delayedLoop);
@@ -257,7 +263,7 @@ var modelParse = {
 		//										// you could then pass in 'destinationURL' instead of the hard coded 'this.url' to the 'makeCorsRequest()' function to send to whichever device you want.
 		***************************END PSEUDOCODE*******************************/
 
-		makeCorsRequest(this.url,JSON.stringify(getInstruction),index,isFirst); // send the 'get' instruction via HTTP POST request
+		makeCorsRequest(this.url,getInstruction,index,isFirst); // send the 'get' instruction via HTTP POST request
 	},
 
 
@@ -291,7 +297,7 @@ var modelParse = {
 			//												// you could then pass in 'destinationURL' instead of the hard coded 'this.url' to the 'makeCorsRequest()' function to send to whichever device you want.
 			***************************END PSEUDOCODE*******************************/
 
-			makeCorsRequest(this.url,JSON.stringify(setInstruction),k,false); // send the 'set' instruction via HTTP POST request
+			makeCorsRequest(this.url,setInstruction,k,false); // send the 'set' instruction via HTTP POST request
 		}
 	},
 
