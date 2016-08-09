@@ -15,8 +15,9 @@
 //			Added support for all EV3 peripherals
 //
 var modelParse = {
-	url: "http://130.64.94.159:5000", // storage variable for Juliana's EV3 (running Linux server) that we are using for testing.
-	url2: "http://130.64.95.192:5000", // storage variable for Bianca's GrovePI that we are using for testing.
+	url: "http://130.64.154.33:5000", // storage variable for Juliana's EV3 (running Linux server) that we are using for testing.
+	url2: "http://130.64.188.166:5000", // storage variable for Ben's EV3 (running Linux server) that we are using for testing
+	url3: "http://130.64.95.192:5000", // storage variable for Bianca's GrovePI that we are using for testing.
 	lastValues: {}, // object that will store the last value of each trigger input
 	config: {}, // object for storing the port configuration info
 	triggerList: [], // array of trigger data
@@ -283,6 +284,7 @@ var modelParse = {
 
 			console.log("-------------------------------------------------------");
 			console.log(setInstruction); // print the set instruction to the console
+			console.log(JSON.stringify(setInstruction));
 
 			/*****************PSEUDOCODE, NOT IMPLEMENTED YET!**********************
 			// var destinationURL = action_arr[k].deviceURL; // maybe adding a field to each action encoding the URL of the device it goes with could be used to allow multi-device handling.
@@ -419,7 +421,7 @@ var modelParse = {
 					brickButtonSettings.button = trigger.settings.button;
 				}
 				return brickButtonSettings;
-			},
+			}
 		},
 		"set": {
 			"large motor": function(action) { //this.set_l_motor,
@@ -444,6 +446,7 @@ var modelParse = {
 				else if (action.mode === "stop") {
 					lMotorSettings.motor_mode = "stop";
 					lMotorSettings.stop_type = action.settings.stopType;
+					lMotorSettings.power = 25; // temporary for stop testing
 				}
 				else if (action.mode === "resetEncoders") {
 					lMotorSettings.motor_mode = "reset"; // Not yet implemented on EV3
@@ -472,6 +475,7 @@ var modelParse = {
 				else if (action.mode === "stop") {
 					mMotorSettings.motor_mode = "stop";
 					mMotorSettings.stop_type = action.settings.stopType;
+					mMotorSettings.power = 25; // temporary for stop testing
 				}
 				else if (action.mode === "resetEncoders") {
 					mMotorSettings.motor_mode = "reset"; // Not yet implemented on EV3
@@ -509,7 +513,7 @@ var modelParse = {
 				var lightSettings = {};
 				if (action.mode === "lightOn"){
 					lightSettings.led_mode = "on";
-					lightSettings.brick_lights = "both"; // the ev3 can handle different colors at the same time, to include that, encorporate "right" and "left" as options in the interface
+					lightSettings.brick_lights = "both"; // the ev3 can display up to two colors at a time, to include that, add "right" and "left" as "brick_lights" options in the interface
 					lightSettings.color = action.settings.color;
 				}
 				else if (action.mode === "lightOff") {

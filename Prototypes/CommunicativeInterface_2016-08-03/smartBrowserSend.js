@@ -44,15 +44,15 @@ function makeCorsRequest(url, data, index, isStart) {
 
 		}
 		else if (response.value == "none") { // response value for successful set instruction.
-			//console.log(JSON.stringify(response)); // log response in the response_log div
+			//console.log(JSON.stringify(response)); // log response
 		}
 		else if (response.value == 'successful set') {
 			//console.log("\t\tcallbackFCN://\tSET response received");
-			//console.log(JSON.stringify(response)); // log response in the response_log div
+			console.log(JSON.stringify(response)); // log response
 		}
 		else if (response.value != 'successful set' && response.httpCode == 200){ // if valid data and not the response to a 'set' instruction, it must be a 'get' instruction
 			//console.log("\t\tcallback FCN://\tGET response: " + response.value +" received with code: " + response.httpCode);
-			//console.log(JSON.stringify(response));// log response in the response_log div
+			//console.log(JSON.stringify(response));// log response
 
 			if (firstIter) { // if first time contacting EV3, just add the requested value to lastValues object
 				if (response.value != "program start") {
@@ -77,7 +77,6 @@ function makeCorsRequest(url, data, index, isStart) {
 
 	// Response handlers.
 	xhr.onload = function() { // asynchronous event fires when HTTP request send is successful
-		//console.log(xhr.responseText);
 		callback(JSON.parse(xhr.responseText),index,isStart); // callback function handles state change checking and response_log updates
 		//console.log("\txhr.onload EVENT://\t Request successfully sent.");
 		//var endTime = Date.now(); // timestamp at end of send, used to compute total HTTP send latency
