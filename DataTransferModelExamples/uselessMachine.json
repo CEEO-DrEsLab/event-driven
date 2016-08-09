@@ -7,20 +7,6 @@
   "triggers": [
     {
       "port": "ev3Port1",
-      "mode": "press",
-      "actions": [
-        {
-          "port": "ev3PortA",
-          "mode": "start",
-          "settings": {
-            "direction": "backward",
-            "power": "low"
-          }
-        }
-      ]
-    },
-    {
-      "port": "ev3Port1",
       "mode": "release",
       "actions": [
         {
@@ -28,6 +14,20 @@
           "mode": "start",
           "settings": {
             "direction": "forward",
+            "power": "high"
+          }
+        }
+      ]
+    },
+    {
+      "port": "ev3Port1",
+      "mode": "press",
+      "actions": [
+        {
+          "port": "ev3PortA",
+          "mode": "start",
+          "settings": {
+            "direction": "backward",
             "power": "low"
           }
         }
