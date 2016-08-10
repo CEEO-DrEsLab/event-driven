@@ -34,3 +34,6 @@ Every program that can currently be made in our most current configurable interf
 4. `git clone https://github.com/CEEO-DrEsLab/event-driven.git`
 5. A directory called `event-driven` will have been created. All of the project files from the Master branch should be inside.
 6. Use git as normal (`git pull` to update your local repository, `git add` to track files, `git commit -m "message"` to register changes, `git push` to upload committed changes)
+
+## Credit
+Made at the LEGO Discovery Lab at the Tufts University Center for Engineering Education and Outreach.
