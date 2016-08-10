@@ -27,6 +27,12 @@ This prototype is a mock-up of a "smart browser, dumb brick" implementation of t
 ### Data Transfer Model Examples
 Every program that can currently be made in our most current configurable interface prototype can be represented as a JSON string in a certain format. Several examples are included here.
 
+### LabView Code Examples
+It is possible to emulate the event-driven behavior in LabView and the standard EV3 firmware. Several examples of LabView code that emulates the desired behavior to varying degrees are ncluded here.
+
+### Device Capabailities
+This folder contains lists of commands that can be recognized by connected devices (EV3, Raspberry Pi with the GrovePi sensor suite).
+
 ## Instructions for Working on this Project
 1. Open the terminal on your computer
 2. Install `git` if you don't have it yet
