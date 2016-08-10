@@ -53,8 +53,8 @@ TOUCH GET FORMAT
 	“in4”
 *settings*:
 	*touch_mode*: 
-	“raw_touch” (1 or 0 for pressed or released respectively)
-	“count” (Note: not yet implemented)
+		“raw_touch” (1 or 0 for pressed or released respectively)
+		“count” (Note: not yet implemented)
 
 
 ULTRASONIC GET FORMAT
