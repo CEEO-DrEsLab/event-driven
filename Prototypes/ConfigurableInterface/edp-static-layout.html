@@ -77,10 +77,12 @@
 	</div>
 
 	<script>
-	var app = angular.module('edpApp', []);
+	var edpApp = angular.module('edpApp', []);
+
+	// This service module sets certain constants that can be
+	// made available to all parts of the application
 	app.service('edpEv3Constants', function () {
 		// EV3 data
-		// These are used only in the port config panel, and probably shouldn't be in the root scope
 		this.EV3_INPUT_PORTS = [
 			'ev3Port1', 'ev3Port2', 'ev3Port3', 'ev3Port4'
 		];
@@ -105,6 +107,8 @@
 			'ev3BrickLight',
 			'ev3BrickSound'
 		];
+
+		// Display information
 
 		this.EV3_PORT_NAMES = {
 			ev3Port1: 'Port 1',
@@ -461,6 +465,7 @@
 			}
 		};
 	});
+	// Display name filtering
 	app.filter('ev3PortName', ['edpEv3Constants', function(edpEv3Constants) {
 		return function(item) {
 			return edpEv3Constants.EV3_PORT_NAMES[item];
@@ -471,6 +476,7 @@
 			return edpEv3Constants.EV3_CHANNEL_NAMES[item];
 		};
 	}]);
+	// Code block module; repeated for each trigger and action
 	app.directive('edpCell', ['edpEv3Constants', function(edpEv3Constants) {
 		return {
 			restrict: 'A',
@@ -504,6 +510,7 @@
 			},
 		};
 	}]);
+	// Controller; sets up $scope for data binding
 	app.controller('edpCtrl', ['$scope', 'edpEv3Constants', function($scope, edpEv3Constants) {
 		// Port Configuration Panel Dats
 		// Set by blocks in port config panel
