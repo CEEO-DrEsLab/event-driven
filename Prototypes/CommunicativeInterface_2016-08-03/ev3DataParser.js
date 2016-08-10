@@ -452,7 +452,7 @@ var modelParse = {
 				else if (action.mode === "stop") {
 					lMotorSettings.motor_mode = "stop";
 					lMotorSettings.stop_type = action.settings.stopType;
-					lMotorSettings.power = 25; // temporary for stop testing
+					lMotorSettings.power = 25; // temporary for stop testing, for some reason a power value is still needed for multi-send only (single-send works without it) even though the EV3 throws that value away, not sure why...
 				}
 				else if (action.mode === "resetEncoders") {
 					lMotorSettings.motor_mode = "reset"; // Not yet implemented on EV3

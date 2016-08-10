@@ -63,17 +63,22 @@
 
 	<script type="text/javascript"></script>
 	<script>
+	// The purpose of this file is to provide a way to test IoT-capable devices by sending single instructions.
+	// NOTE: CORS (Cross-Origin Resource Sharing) IS NOT A SEPARATE PROTOCOL, it is an extra header that can be sent with 
+	//			any HTTP request.  What this extra header does is it asks the recipient server for permission to execute the
+	//			HTTP request that it is attached to. Since modern browsers block cross-origin HTTP requests by default, this
+	//			extra header is required for any HTTP request to be sent to a location on a different domain.
 	var startTime = 0;
 
-	function send_setter_stuff(data_model, url) {
-		console.log("send_setter_stuff FCN://\tSending command string " + data_model);
-		console.log("send_setter_stuff FCN://\tDestination URL: " + url);
+	function send_data(data_model, url) {
+		console.log("send_data FCN://\tSending command string " + data_model);
+		console.log("send_data FCN://\tDestination URL: " + url);
 		document.getElementById("send_log").innerHTML = data_model;
 		startTime = Date.now();
 		makeCorsRequest(url,data_model);
 	}
 	//set up and send a CORS HTTP POST request
-	function createCORSRequest(method,url) {
+	function createCORSRequest(method,url) { // credit for function from CORS tutorial by Monsur Hossain, http://www.html5rocks.com/en/tutorials/cors/
 
 		var xhr = new XMLHttpRequest();
 		if ("withCredentials" in xhr) {
@@ -93,7 +98,7 @@
 	}
 
 	// Make the actual CORS request.
-	function makeCorsRequest(url, data) {
+	function makeCorsRequest(url, data) { // credit for makeCorsRequest function and onload/onerror methods from CORS tutorial by Monsur Hossain, http://www.html5rocks.com/en/tutorials/cors/
 		var xhr = createCORSRequest('POST', url);
 		console.log("makeCorsRequest FCN://\t CORS Request Assembled.");
   		if (!xhr) {
@@ -103,10 +108,10 @@
   			// manage callbacks from EV3
   		function callback(response) {
 			console.log('\t\tcallback FCN://\t' + JSON.stringify(response));
-			if (response.value == "Not found") {
+			if (response.value == "Not found") { // "Not found" is the EV3's response code for an invalid input
 				console.error("Invalid Input, please fix and retry.");
 			}
-			else {
+			else { // if successful send, display the response
 				document.getElementById("response_log").innerHTML = JSON.stringify(response);
 				console.log('\t\tcallback FCN://\tResponse received from CORS HTTP request to ' + url);
 				console.log('\t\tcallback FCN://\t HTTP response code: ' + response.httpCode);
@@ -114,18 +119,18 @@
 			}
 		}
 		// Response handlers.
-		xhr.onload = function() {
+		xhr.onload = function() { // function to handle successful send
 			callback(JSON.parse(xhr.responseText));
 			console.log("\txhr.onload EVENT://\t Request successfully sent.");
-			var endTime = Date.now();
+			var endTime = Date.now();// log time of success for latency calculation
 			console.log("\txhr.onload EVENT://\tmessage sent in: " + (endTime - startTime) + " msec"); // log elapsed send time
 		};
-		xhr.onerror = function() {
+		xhr.onerror = function() { // function to handle failed send
 			console.log('\txhr.onerror EVENT://\tWoops, there was an error making the request.');
-			var endTime = Date.now();
+			var endTime = Date.now(); // log time of failure for latency calculation
 			console.log("\txhr.onerror EVENT://\tmessage sent in: " + (endTime - startTime) + " msec");
 		};
-		xhr.send(data);
+		xhr.send(data); // send data via HTTP POST with CORS headers
 		console.log("makeCorsRequest FCN://\t CORS Request Sent.");
 	}
 
@@ -140,10 +145,10 @@
 	<h2>Paste command below</h2>
 
 	<form onsubmit="return false;">
-		<h5>EV3 TEST COMMANDS:</h5>
-		<h6>{"status":"set","io_type":"large motor","port":"outA","info":"run forever","value":75}</h6>
-		<h6>{"status":"get","io_type":"touch","port":"in1","info":"value","mode":"raw"}</h6>
-		<h6>{"status":"set","io_type":"stop all"}<h6>
+		<h5>EV3 TEST COMMANDS:</h5> <!--Put sample EV3 test commands here so that they are easier to paste in for testing-->
+		<h6>{"status":"set","io_type":"large motor","port":"outA","settings":{"motor_mode":"run forever","power":75}}</h6>
+		<h6>{"status":"get","io_type":"touch","port":"in1","settings":{"touch_mode":"raw_touch"}}</h6>
+		<h6>{"status":"set","io_type":"stop all"}<h6> <!--this command is special, it stops all motors running and sets them to coast-->
 		<h5>GROVEPI TEST COMMANDS:</h5>
 		<h6>{"status":"set","io_type":"led","port":4,"info":"on","value":-1}</h6>
 		<h6>{"status":"get","io_type":"button","port":3,"info":"value","mode":"raw"}</h6>
@@ -153,7 +158,7 @@
 		<h5> Bianca's GrovePI:</h5>
 		<h6> http://130.64.95.192:5000</h6>
 		<input name="url_input" id="destination" type="text"></input>
-		<button id="submit_button" type="button" onclick="send_setter_stuff(document.getElementById('data').value, document.getElementById('destination').value)">Send!</button>
+		<button id="submit_button" type="button" onclick="send_data(document.getElementById('data').value, document.getElementById('destination').value)">Send!</button>
 	</form>
 	<div id="send_col">
 		<h4 id="send_title">Send Log</h4>
