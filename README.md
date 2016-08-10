@@ -28,7 +28,7 @@ This prototype is a mock-up of a "smart browser, dumb brick" implementation of t
 Every program that can currently be made in our most current configurable interface prototype can be represented as a JSON string in a certain format. Several examples are included here.
 
 ### LabView Code Examples
-It is possible to emulate the event-driven behavior in LabView and the standard EV3 firmware. Several examples of LabView code that emulates the desired behavior to varying degrees are ncluded here.
+It is possible to emulate the event-driven behavior in LabView and the standard EV3 firmware. Several examples of LabView code that emulates the desired behavior to varying degrees are included here.
 
 ### Device Capabailities
 This folder contains lists of commands that can be recognized by connected devices (EV3, Raspberry Pi with the GrovePi sensor suite).
@@ -46,7 +46,7 @@ This folder contains lists of commands that can be recognized by connected devic
 ### Working with the Prototypes
 Several of the prototypes must be run on a server. Something like WAMP/MAMP/LAMP/XAMP or Apache can be set up relatively easily.
 
-This is necessary for the Communicative Interface prototype, and for the Configurable Interface prototype. Other html documents can be run just be double-clicking.
+This is necessary for the Communicative Interface prototype, and for the Configurable Interface prototype. Other HTML documents can be run just be double-clicking.
 
 ## Credit
 Made at the LEGO Discovery Lab at the Tufts University Center for Engineering Education and Outreach.
