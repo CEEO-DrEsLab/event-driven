@@ -1,0 +1,225 @@
+EV3 Get and Set Commands for a smart-browser setup.  
+Purpose: This is the format for sending to the EV3 to get sensor values and set outputs such as turning motors on or off.  
+By: Benjamin Zackin
+Last Modified: 8/10/2016
+
+Example 1: {*status*:"set",*io_type*:"large motor",*port*:"outA",*settings*:{*motor_mode*:"run forever","power":75}}
+	This object is a set instruction for the large motor in port A, asking the EV3 to turn the motor on at a 
+		power level of 75 and keep it running until told otherwise (aka forever).
+
+Example 2: {*status*:"get",*io_type*:"touch",*port*:"in1",*settings*:{*touch_mode*:"raw_touch"}}
+	This object is a get instruction for the touch sensor in port 1, asking the EV3 to return the
+		current raw value of the touch sensor (1 or 0 for pressed or released respectively).
+
+
+Below is a list of all EV3 peripherals organized by peripheral, then by status field and then by io_type with all available keys and values listed.
+	Note: keys are wrapped with asterisks (*).
+
+——————————————————————START OF GET INSTRUCTIONS——————————————————————————————————
+
+MOTOR GET FORMAT
+*status*:
+	“get”
+*io_type*:
+	“large motor”
+	“medium motor
+*port*:
+	“outA”
+	“outB”
+	“outC”
+	“outD”
+*settings*:
+	*motor_mode*: 
+		“position”
+		“speed” (the motor’s current speed)
+		“duty_cycle” (the motor’s current power setting)
+		“rate”
+	*units*
+		“deg”
+		“rot”
+		“deg_per_sec” (Note: not yet implemented)
+		“rot_per_sec” (Note: not yet implemented)
+
+
+TOUCH GET FORMAT
+*status*:
+	“get”
+*io_type*:
+	“touch”
+*port*:
+	“in1”
+	“in2”
+	“in3”
+	“in4”
+*settings*:
+	*touch_mode*: 
+	“raw_touch” (1 or 0 for pressed or released respectively)
+	“count” (Note: not yet implemented)
+
+
+ULTRASONIC GET FORMAT
+*status*:
+	“get”
+*io_type*:
+	“ultrasonic”
+*port*:
+	“in1”
+	“in2”
+	“in3”
+	“in4”
+*settings*:
+	*us_mode*: 
+		“distance”
+		“listen” (Note: not yet implemented)
+	*units*
+		“cm” (detected distance in centimeters)
+		“in” (detected distance in inches)
+	
+	
+COLOR GET FORMAT
+*status*:
+	“get”
+*io_type*:
+	“color”
+*port*:
+	“in1”
+	“in2”
+	“in3”
+	“in4”
+*settings*:
+	*color_mode*: 
+		“color”
+		“reflected”
+		“ambient”
+		“rgb_raw” (Note: not yet implemented)
+
+
+GYRO GET FORMAT (NOT YET IMPLEMENTED)
+*status*:
+	“get”
+*io_type*:
+	“gyro”
+*port*:
+	“in1”
+	“in2”
+	“in3”
+	“in4”
+*settings*:
+	*gyro_mode*: 
+		“position”
+		“rate”
+	*units*
+		“deg”
+		“rot”
+		“deg_per_sec”
+		“rot_per_sec”
+
+
+BRICK BUTTON GET FORMAT
+*status*:
+	“get”
+*io_type*:
+	“nav button”
+*port*:
+	“onboard”
+*settings*:
+	*touch_mode*: 
+		“raw_touch” (1 or 0 for pressed or released respectively)
+		“count” (Note: not yet implemented)
+	*button*:
+		“up”
+		“down”
+		“left”
+		“right”
+		“enter”
+
+
+INFRARED SENSOR GET FORMAT (Not yet implemented)
+
+
+TEMPERATURE SENSOR GET FORMAT (Not yet implemented)
+
+
+NXT SOUND SENSOR GET FORMAT (Not yet implemented)
+
+
+————————————————————————START OF SET INSTRUCTIONS—————————————————————————————
+
+
+MOTOR SET FORMAT
+*status*:
+	“set”
+*io_type*:
+	“large motor”
+	“medium motor”
+*port*:
+	“outA”
+	“outB”
+	“outC”
+	“outD”
+*settings*:
+	*motor_mode*: 
+		“run forever”
+		“switch”
+		“stop”
+		“reset” (resets motor’s encoder)
+	*stop_type*:
+		“brake”
+		“coast”
+	*power*: 
+		(the power value must be an integer between -100 and 100 inclusive, negative values are for backward motion and positive values are for forward motion. “high” = 100, “medium” = 66, and “low” = 33 are the values used by the interface, but any valid power value may be used)
+
+
+BRICK SOUND SET FORMAT
+*status*:
+	“set”
+*io_type*:
+	“sound”
+*port*:
+	“onboard”
+*settings*:
+	*sound_mode*: 
+		“frequency” (uses frequency, volume, and duration fields)
+		“tone” (uses note, volume, octave, and duration fields)
+		“file” (uses filename and volume fields)
+		“speech” (uses message and volume fields)
+	*volume*: 
+		(how loud to play the sound. Note: not yet implemented)
+	*duration*: 
+		(how long to play the note/tone in milliseconds)
+	*frequency*: 
+		(the frequency tone that you want to play in Hz, eg. 440)
+	*note*: 
+		(the musical note that you want to play, from the list of “C”,”C#”,”D”,”D#”,”E”,”F”,”F#”,”G”,”G#”,”A”,”A#”,”B”. Note: not yet implemented)
+	*octave*: 
+		(the octave of the musical note you want to play. Note: not yet implemented)
+	*filename*: 
+		(the name of the file you want to play. Note: not yet implemented)
+	*message*:
+	 	(the string that you want the EV3 to say, aka text to speech)
+
+Note: Since the volume field is currently not yet implemented on the brick, the EV3 just ignores that field for now. Just send a dummy number until it is implemented.
+
+
+BRICK LED SET FORMAT
+*status*:
+	“set”
+*io_type*:
+	“led”
+*port*:
+	“onboard”
+*settings*:
+	*led_mode*:
+		“on” (Note: the brick_lights and color keys are only used for  *led_mode*:“on”)
+		“off” (tu)
+	*brick_lights*: (allows you to set the backlight color for one side of the brick buttons independently, or to set both sides at the same time)
+		“right” 
+		“left”
+		“both”
+	*color*: 
+		“green”
+		“yellow”
+		“amber” (this is as close as the EV3 gets to having an orange color setting unfortunately)
+		“red”
+
+——————————————————————————END OF FILE—————————————————————————————

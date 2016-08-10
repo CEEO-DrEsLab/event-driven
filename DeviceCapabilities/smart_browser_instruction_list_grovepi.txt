@@ -1,0 +1,187 @@
+GrovePi Get and Set Commands for a smart-browser setup.  
+Purpose: This is the format for sending to the GrovePi to get sensor values and set outputs such as turning motors on or off.  
+By: Benjamin Zackin
+Last Modified: 8/10/2016
+
+Example 1: {*io_type*:"get","io_type”:”button”,”port”: 4,*settings*:{“touch_mode":"raw_touch"}}
+	This object is a get instruction for the touch sensor connected to digital pin 4, asking the GrovePi to return the current raw value of the touch sensor (1 or 0 for pressed or released respectively).
+
+
+Below is a list of all EV3 peripherals organized by peripheral, then by status field and then by io_type with all available keys and values listed.
+	Note: keys are wrapped with asterisks (*).
+
+——————————————————————START OF GET INSTRUCTIONS——————————————————————————————————
+
+BUTTON GET FORMAT
+*status*:
+	“get”
+*io_type*:
+	“button”
+*port*:
+	(integer value from 2-8 inclusive corresponding to the button’s digital pin number)
+*settings*:
+	*touch_mode*: 
+		“raw_touch” (returns 1 or 0 for pressed or released respectively)
+
+
+ULTRASONIC GET FORMAT
+*status*:
+	“get”
+*io_type*:
+	“ultrasonic”
+*port*:
+	(integer value from 2-8 inclusive corresponding to the ultrasonic sensor’s digital pin number)
+*settings*:
+	*ultrasonic_mode*: 
+		“distance”
+	*units*:
+		“cm” (detected distance in centimeters)
+		“in” (detected distance in inches)
+
+
+LED GET FORMAT
+*status*:
+	“get”
+*io_type*:
+	“led”
+*port*:
+	(integer value from 2-8 inclusive corresponding to the led’s digital pin number)
+*settings*:
+	*led_mode*: 
+		“raw_led”  (returns 1 or 0 for on and off)
+
+
+ROTARY ANGLE SENSOR GET FORMAT (NOT YET IMPLEMENTED)
+*status*:
+	“get”
+*io_type*:
+	“rotary_angle_sensor”
+*port*:
+	(integer value from 0-2 inclusive corresponding to the rotary angle sensor’s analog pin number)
+*settings*:
+	*angle_mode*: 
+		“raw_angle”
+	*units*
+		“analog” (returns the analog value measured by the sensor, an integer from 0-1023 inclusive)
+		“degrees” (the angle off of zero measured in degrees)
+
+
+LIGHT SENSOR GET FORMAT
+*status*:
+	“get”
+*io_type*:
+	“light_sensor”
+*port*:
+	(integer value from 0-2 inclusive corresponding to the light sensor’s analog pin number)
+*settings*:
+	*light_mode*: 
+		“raw_light” (returns the analog value measured by the sensor, an integer from 0-1023 inclusive)
+
+
+SOUND GET FORMAT
+*status*:
+	“get”
+*io_type*:
+	“sound”
+*port*:
+	(integer value from 0-2 inclusive corresponding to the sound sensor’s analog pin number)
+*settings*:
+	*sound_mode*: 
+		“raw_volume”
+	*units*:
+		“analog” (returns the analog value measured by the sensor, an integer from 0-1023 inclusive)
+		“voltage” (returns the raw volume value measured by the sensor in volts)
+
+
+TEMPERATURE GET FORMAT
+*status*:
+“get”
+*io_type*:
+“temperature”
+*port*:
+	(integer value from 2-8 inclusive corresponding to the temperature sensor’s digital pin number)
+*settings*:
+	*temp_mode*: 
+		“raw_temp” 
+	*units*:
+		“celcius” (returns the measured temperature in degrees celcius)
+		“fahrenheit” (returns the measured temperature in degrees fahrenheit)
+
+
+————————————————————————START OF SET INSTRUCTIONS—————————————————————————————
+
+
+LED SET FORMAT
+*status*:
+	“set”
+*io_type*:
+	“led”
+*port*:
+	(integer value from 2-8 inclusive corresponding to the led’s digital pin number)
+*settings*:
+	*led_mode*: 
+		“on” (toggle led on)
+		“off” (toggle led off)
+
+
+BUZZER SET FORMAT
+*status*:
+	“set”
+*io_type*:
+	“buzzer”
+*port*:
+	(integer value from 2-8 inclusive corresponding to the buzzer’s digital pin number)
+*settings*:
+	*buzz_mode*: 
+		“on” (toggle buzzer on)
+		“off” (toggle buzzer off)
+
+
+RELAY SET FORMAT
+*status*:
+	“set”
+*io_type*:
+	“relay”
+*port*:
+	(integer value from 2-8 inclusive corresponding to the buzzer’s digital pin number)
+*settings*:
+	*relay_mode*:
+		“on” (it is effectively a digitally controlled switch, so turning it on is like pressing a button)
+		“off (it is effectively a digitally controlled switch, so turning it off is like letting go of a button)
+		“switch” (invert the current relay state, if it’s off turn it on and if it is on turn it off)
+
+
+DISPLAY SET FORMAT
+*status*:
+	“set”
+*io_type*:
+	“display”
+*port*:
+	N/A (it’s an I2C sensor so port doesn’t matter)
+*settings*:
+	*display_mode*:
+		“post” 
+	*message*:
+		(the message you want to print to the display)
+	*color*: (the color you want the text to be)
+		“red”
+		“green”
+		“blue”
+
+
+TWEET SET FORMAT
+*status*:
+	“set”
+*io_type*:
+	“tweet”
+*port*:
+	N/A (don’t include a port field for this one, or put an empty/dummy string here)
+*settings*:
+	*tweet_mode*:
+		“post” 
+	*message*:
+		(the message you want to tweet to the display)
+	OTHER AUTHENTICATION FIELDS NEEDED FOR THIS TO BE FULLY IMPLEMENTED
+
+
+——————————————————————END OF FILE—————————————————————————————
