@@ -1,4 +1,4 @@
-# Configrable Interface
+# Configurable Interface
 
 ## How to Run
 1. Download all of the files in this folder to a folder on your machine.
