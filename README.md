@@ -11,14 +11,21 @@ A new programmer's first coding experience is often with a procedural system: op
 Our event-driven paradigm encourages builders to design robots based on sensor inputs, resulting in more extensive use of the kit’s sensors. It puts the focus of robot design on physical robots rather than on code. Our system is intended primarily as an introduction, an easy way to get a robot to behave how you want it to, and also as a way to easily connect robots to the larger Internet of Things.
 
 ## Guide to this Repository
+
 ### Prototypes
 Several interactive prototypes have been made to demonstrate various aspects of our interface.
+
 #### Drag and Drop
 This prototype demonstrates some early ideas of how placing code blocks could work. Future prototypes will likely feature a single channel bank rather than separating channels into "trigger channels" and "action channels."
+
 #### Configurable Layout
 This prototype is the most current version. It can represent any simple "When-This-Then-That" program, and export it as a JSON string. Code blocks can be configured in various modes.
+
 #### Communicative Interface
 This prototype is a mock-up of a "smart browser, dumb brick" implementation of the configurable interface. It consists of a version of the configurable interface linked to an in-browser program for controlling an EV3 Intelligent Brick.
+
+### Data Transfer Model Examples
+Every program that can currently be made in our most current configurable interface prototype can be represented as a JSON string in a certain format. Several examples are included here.
 
 ## Instructions for Working on this Project
 1. Open the terminal on your computer
