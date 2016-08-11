@@ -18,6 +18,7 @@ var modelParse = {
 	url: "http://130.64.154.33:5000", // storage variable for Juliana's EV3 (running Linux server) that we are using for testing.
 	url2: "http://130.64.188.166:5000", // storage variable for Ben's EV3 (running Linux server) that we are using for testing
 	url3: "http://130.64.95.192:5000", // storage variable for Bianca's GrovePI that we are using for testing.
+	//startTime: 0, // timer variable for computing send latency
 	lastValues: {}, // object that will store the last value of each trigger input
 	config: {}, // object for storing the port configuration info
 	triggerList: [], // array of trigger data
@@ -50,8 +51,8 @@ var modelParse = {
 		for(var i = 0; i < trigger_len; i++) {
 			if (!this.triggerList[i].channel) {
 				this.triggerList[i].channel = this.config[this.triggerList[i].port];
-				this.triggerList[i].requestPending = false; // initialize request pending field for all triggers to false
 			}
+			this.triggerList[i].requestPending = false; // initialize request pending field for all triggers to false
 			if (this.triggerList[i].actions) {
 				for (var numActs = 0; numActs < this.triggerList[i].actions.length; numActs++){
 					if (!this.triggerList[i].actions[numActs].channel) {
@@ -59,10 +60,12 @@ var modelParse = {
 					}
 				}
 			}
-			if (this.triggerList[i].channel === "program") {
+			if (this.triggerList[i].mode === "programStart") {
 				this.send_set(this.triggerList[i].actions); // loop through the outputs for that state change and send set requests for all of them
 			}
-			this.send_get(this.triggerList[i], i, true);
+			else { // if the trigger is not the program start block, populate the lastValues object.
+				this.send_get(this.triggerList[i], i, true);
+			}
 		}
 		//console.log("parse_data Fcn://\tstart values for all triggers set");
 		var j = 0;
@@ -71,8 +74,8 @@ var modelParse = {
 
 			if(j < trigger_len) {
 			 	//console.log("parse_data Fcn://\t about to send get for trigger #: " + j);
-			 	console.log("requestPending status is: " + modelParse.triggerList[j].requestPending);
-			 	console.log("for device in port: " + modelParse.triggerList[j].port);
+			 	console.log("parse_data Fcn://\trequestPending status is: " + modelParse.triggerList[j].requestPending);
+			 	console.log("parse_data Fcn://\tfor device in port: " + modelParse.triggerList[j].port);
 				if (!modelParse.triggerList[j].requestPending) {
 					modelParse.triggerList[j].requestPending = true; // set the pending variable to true for this trigger (ok to do this here b/c pass by reference)
 					modelParse.send_get(modelParse.triggerList[j], j, false);
@@ -93,11 +96,122 @@ var modelParse = {
 	//			
 	handleStop: function () { // not currently working.
 			// stop all EV3 motors
-			makeCorsRequest(modelParse.url,{"status":"set","io_type":"stop all"}, 0, false);
+			this.makeCorsRequest({"status":"set","io_type":"stop all"}, 0, false);
 			
 			 // stop trigger scanning loop
 			clearInterval(delayedLoop);
 	},
+
+	// createCORSRequest()
+	//		HTTP POST w/ CORS assembly and compatibility checker function.
+	//		Sets up an XMLHttpRequest object in the correct format for the browser
+	//		Credit for this function goes to CORS tutorial by Monsur Hossain, http://www.html5rocks.com/en/tutorials/cors/
+	//		Note: This function does not send the HTTP request, it only builds the object and checks for browser compatibility.
+	//
+	createCORSRequest: function (method) {
+		var xhr = new XMLHttpRequest();
+		if ("withCredentials" in xhr) { // confirm browser compatibility
+			// Check if the XMLHttpRequest object has a "withCredentials" property.
+			// "withCredentials" only exists on XMLHTTPRequest2 objects.
+			xhr.open(method, modelParse.url, true);
+		} else if (typeof XDomainRequest != "undefined") {
+			// Otherwise, check if XDomainRequest.
+			// XDomainRequest only exists in IE, and is IE's way of making CORS requests.
+			xhr = new XDomainRequest();
+			xhr.open(method, modelParse.url);
+		} else {
+			// Otherwise, CORS is not supported by the browser.
+			xhr = null;
+		}
+		return xhr;
+	},
+
+	
+	// makeCorsRequest()
+	// 		HTTP POST w/ CORS sending and callback handling function.
+	//		Calls 'createCORSRequest' to construct a POST request object, then sends the HTTP request.
+	//		Contains 'onload' and 'onerror' methods to handle successful and failed HTTP responses respectively.
+	//		The 'onload'  method calls the 'callback' function, which processes successful HTTP responses by checking for
+	//			state changes, sending the corresponding set instructions if a state change is detected, 
+	//			and updating the lastValues object to match that newest response value.
+	// 		Credit for the 'makeCoresRequest' function and 'onload'/'onerror' response handling goes to CORS tutorial by Monsur Hossain, http://www.html5rocks.com/en/tutorials/cors/
+	//
+	makeCorsRequest: function(data, index, isStart) { 
+		// start send timer, this prints out the latency between each send and receiving its response.
+		//startTime = Date.now();
+
+		var xhr = this.createCORSRequest('POST'); // create XMLHttpRequest object
+
+		if (!xhr) { // prints alert if CORS isn't supported on the user's browser.
+			alert('CORS not supported');
+			return;
+		}
+
+		// manage callbacks from EV3, test for state change, and if a state changed, request the corresponding actions
+		function callback(response) {
+			//console.log('\t\tcallback FCN://\t' + JSON.stringify(response)); // print out the response to the console
+			if (response.value == "Not found") { 
+				// response value for invalid instruction format
+			}
+			else if (response.value == "none") { // response if missing return value on EV3 side
+				//console.log(JSON.stringify(response)); // log response
+			}
+			else if (response.value == 'successful set') {
+				//console.log("\t\tcallbackFCN://\tSET response received");
+				console.log(JSON.stringify(response)); // log response
+			}
+			else if (response.value != 'successful set' && response.httpCode == 200) { // if valid data and not the response to a 'set' instruction, it must be a 'get' instruction
+				//console.log("\t\tcallback FCN://\tGET response: " + response.value +" received with code: " + response.httpCode);
+				//console.log(JSON.stringify(response));// log response
+
+				if (isStart) { // if first time contacting EV3, just add the requested value to lastValues object
+					modelParse.lastValues[modelParse.triggerList[index].port] = response.value; // lastValues object is indexed by port name.
+					//console.log(modelParse.lastValues[modelParse.triggerList[index].port])
+				} 
+				else if (modelParse.is_state_change(response.value, modelParse.triggerList[index], modelParse.lastValues[modelParse.triggerList[index].port])) {
+					// if not first time contacting the EV3, check if the value has broken the designated threshold
+
+					modelParse.lastValues[modelParse.triggerList[index].port] = response.value; // if a state change occurs, change the last value to be the current value.
+					modelParse.send_set(modelParse.triggerList[index].actions); // loop through the outputs for that state change and send set requests for all of them
+
+				}
+				else { // if no state change detected, do nothing
+					modelParse.lastValues[modelParse.triggerList[index].port] = response.value; // if a state change occurs, change the last value to be the current value.
+
+					// console.log("\t\tcallback FCN://\t No state change detected in trigger #: " + index);
+				}
+			}
+		}
+
+		// Response handlers.
+		xhr.onload = function() { // asynchronous event fires when HTTP request send is successful
+			console.log ("\txhr.load EVENT://\tstatus is: " + data.status);
+			if (data.status === "get") {
+				modelParse.triggerList[index].requestPending = false;
+			}
+			callback(JSON.parse(xhr.responseText)); // callback function handles state change checking and response_log updates
+			console.log("\txhr.load EVENT://\trequestPending status is now: " + modelParse.triggerList[index].requestPending);
+
+			//console.log("\txhr.load EVENT://\t Request successfully sent.");
+			//var endTime = Date.now(); // timestamp at end of send, used to compute total HTTP send latency
+			//console.log("\txhr.onload EVENT://\tmessage sent in: " + (endTime - startTime) + " msec"); // log elapsed send time
+		};
+		xhr.onerror = function() { // asynchronous event fires when HTTP request fails
+			console.log('\txhr.onerror EVENT://\tWoops, there was an error making the request.');
+			console.log ("\txhr.onerror EVENT://\tstatus is: " + data.status);
+			if (data.status === "get") {
+				modelParse.triggerList[index].requestPending = false;
+			}
+			console.log("\txhr.onerror EVENT://\trequestPending status is now: " + modelParse.triggerList[index].requestPending);
+
+			//var endTime = Date.now(); // timestamp at end of send, used to compute total HTTP send latency
+			//console.log("\txhr.onerror EVENT://\tmessage sent in: " + (endTime - startTime) + " msec"); // log elapsed send time
+		};
+
+		xhr.send(JSON.stringify(data)); // send the HTTP request
+		//console.log("this.makeCorsRequest FCN://\t CORS Request Sent.");
+	},
+
 
 	// is_state_change()
 	//		State Change checking function
@@ -155,6 +269,7 @@ var modelParse = {
 			return true;
 		}
 		*/
+
 		// if no state change detected
 		return false;
 	},
@@ -263,7 +378,7 @@ var modelParse = {
 		//										// you could then pass in 'destinationURL' instead of the hard coded 'this.url' to the 'makeCorsRequest()' function to send to whichever device you want.
 		***************************END PSEUDOCODE*******************************/
 
-		makeCorsRequest(this.url,getInstruction,index,isFirst); // send the 'get' instruction via HTTP POST request
+		this.makeCorsRequest(getInstruction,index,isFirst); // send the 'get' instruction via HTTP POST request
 	},
 
 
@@ -297,9 +412,10 @@ var modelParse = {
 			//												// you could then pass in 'destinationURL' instead of the hard coded 'this.url' to the 'makeCorsRequest()' function to send to whichever device you want.
 			***************************END PSEUDOCODE*******************************/
 
-			makeCorsRequest(this.url,setInstruction,k,false); // send the 'set' instruction via HTTP POST request
+			this.makeCorsRequest(setInstruction,k,false); // send the 'set' instruction via HTTP POST request
 		}
 	},
+
 
 	ioBuilderFunctions: {
 		"get": {
