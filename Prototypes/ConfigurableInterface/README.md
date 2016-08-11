@@ -3,11 +3,11 @@
 ## Files
 ####`bluestud.png`
 Background image for the application. Tiled.
-####`edp-cell.html`
+#####`edp-cell.html`
 HTML template for the individual code blocks. To be used with the edpCell AngularJS directive.
-####`edp-static-layout.html`
+######`edp-static-layout.html`
 HTML document for the web application. Uses AngularJS, which must be downloaded from the internet; thus, an internet connection is required to run.
-####`edp-style.css`
+######`edp-style.css`
 Stylesheet for the web application.
 
 ## How to Run
